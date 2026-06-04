@@ -420,12 +420,14 @@ export default function Home() {
           </div>
 
           <div className="flex gap-3">
-            <Link
-              href="/admin"
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-semibold rounded-xl transition-all"
-            >
-              Ke Panel Admin
-            </Link>
+            {user && user.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL && (
+              <Link
+                href="/admin"
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-semibold rounded-xl transition-all"
+              >
+                Ke Panel Admin
+              </Link>
+            )}
             <a
               href={`https://wa.me/6285163612553?text=Halo%20Admin%20KasirKu,%20saya%20ingin%20upgrade%20langganan%20toko%20${encodeURIComponent(store.name)}`}
               target="_blank"
