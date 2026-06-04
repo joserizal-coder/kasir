@@ -121,10 +121,21 @@ export function AppProvider({ children }) {
           await db.stores.put(data);
           setStore(data);
           localStore = data;
+
+          // Also sync cashiers from server to fix cases where initial save failed
+          const { data: cashiersData } = await supabase
+            .from('cashiers')
+            .select('*')
+            .eq('store_id', data.id);
+
+          if (cashiersData && cashiersData.length > 0) {
+            await db.cashiers.where('store_id').equals(data.id).delete();
+            await db.cashiers.bulkPut(cashiersData);
+          }
         }
       }
       
-      // 3. Auto-login cashier if store exists (owner can bypass PIN or auto-login as owner cashier)
+      // 3. Auto-login cashier if store exists (owner auto-login as owner cashier, bypassing PIN)
       if (localStore) {
         const ownerCashier = await db.cashiers
           .where('store_id').equals(localStore.id)
