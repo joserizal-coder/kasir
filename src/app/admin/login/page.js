@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
     // Check if already logged in as admin
     const checkActiveAdmin = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && user.email === ADMIN_EMAIL) {
+      if (user && ADMIN_EMAIL && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         router.push('/admin');
       } else {
         setCheckingSession(false);
@@ -44,13 +44,17 @@ export default function AdminLoginPage() {
 
       const user = data?.user;
 
-      // 2. Validate email is the admin email
-      if (user && user.email === ADMIN_EMAIL) {
+      // 2. Validate email is the admin email (case-insensitive)
+      if (user && ADMIN_EMAIL && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         router.push('/admin');
       } else {
         // Sign out immediately if not admin
         await supabase.auth.signOut();
-        setError('Akses ditolak. Email ini tidak terdaftar sebagai Administrator KasirKu.');
+        if (!ADMIN_EMAIL) {
+          setError('Gagal masuk: Konfigurasi NEXT_PUBLIC_ADMIN_EMAIL belum terbaca oleh sistem. Silakan restart server dev lokal Anda.');
+        } else {
+          setError('Akses ditolak. Email ini tidak terdaftar sebagai Administrator KasirKu.');
+        }
       }
     } catch (err) {
       setError(err.message || 'Gagal login. Periksa kembali email dan password Anda.');

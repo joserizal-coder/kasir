@@ -31,7 +31,7 @@ export default function AdminPage() {
   useEffect(() => {
     // Only fetch if user is verified admin
     if (!authLoading) {
-      if (!user || user.email !== ADMIN_EMAIL) {
+      if (!user || !ADMIN_EMAIL || user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
         router.push('/admin/login');
       } else {
         fetchAdminData();
@@ -158,7 +158,7 @@ export default function AdminPage() {
   };
 
   // ACCESS CONTROL: Block non-admin users with clean redirect
-  if (authLoading || !user || user.email !== ADMIN_EMAIL) {
+  if (authLoading || !user || !ADMIN_EMAIL || user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100">
         <div className="flex flex-col items-center gap-4">
