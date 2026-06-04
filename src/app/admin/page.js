@@ -168,33 +168,42 @@ export default function AdminPage() {
     );
   }
 
+  // Calculate metrics
+  const totalStores = stores.length;
+  const activeStores = stores.filter(st => getSubscriptionStatus(st).code === 'ACTIVE').length;
+  const expiringStores = stores.filter(st => getSubscriptionStatus(st).code === 'EXPIRING').length;
+  const expiredStores = stores.filter(st => getSubscriptionStatus(st).code === 'EXPIRED').length;
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Admin Header */}
-      <header className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between z-10">
+      <header className="bg-slate-900 border-b border-slate-800/80 px-6 py-4 flex items-center justify-between z-10 backdrop-blur-md">
         <div className="flex items-center gap-3">
           <Link href="/" className="p-2 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           </Link>
           <div>
-            <h1 className="font-bold text-md flex items-center gap-2">
-              Panel Admin KasirKu
-              <span className="bg-violet-500 text-slate-950 text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
-                Billing Manager
+            <h1 className="font-extrabold text-lg flex items-center gap-2">
+              Kasir<span className="text-violet-400">Ku</span> Console
+              <span className="bg-violet-500/10 text-violet-400 text-[10px] font-black uppercase px-2 py-0.5 rounded-md border border-violet-500/20">
+                Back-Office
               </span>
             </h1>
-            <p className="text-[10px] text-slate-400">Kelola aktivasi & perpanjangan paket berlangganan manual</p>
+            <p className="text-[10px] text-slate-500 font-medium tracking-wide">Pusat Manajemen Lisensi & Billing Toko</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-xs text-slate-400 hidden sm:inline">{user?.email}</span>
+          <div className="hidden md:flex flex-col items-end text-right">
+            <span className="text-xs font-semibold text-slate-300">{user?.email}</span>
+            <span className="text-[9px] text-violet-400 uppercase tracking-widest font-bold">System Administrator</span>
+          </div>
           <button
             onClick={async () => {
               await supabase.auth.signOut();
               router.push('/admin/login');
             }}
-            className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs transition-all font-semibold"
+            className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 hover:border-rose-500/35 rounded-xl text-xs transition-all font-bold tracking-wide"
           >
             Keluar Admin
           </button>
@@ -202,266 +211,313 @@ export default function AdminPage() {
       </header>
 
       {/* Main Body Grid */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-8 flex flex-col lg:flex-row gap-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8 space-y-8">
         
-        {/* LEFT COLUMN: Stores List */}
-        <section className="flex-1 space-y-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative text-sm">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-              </span>
-              <input
-                type="text"
-                placeholder="Cari toko berdasarkan nama..."
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 transition-colors"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-
-            <div className="flex gap-1.5 overflow-x-auto">
-              {['Semua', 'Aktif', 'Hampir Habis', 'Kedaluwarsa'].map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setStatusFilter(f)}
-                  className={`px-3 py-2 rounded-xl text-xs font-semibold shrink-0 transition-all ${
-                    statusFilter === f
-                      ? 'bg-violet-500 text-slate-950 shadow-md shadow-violet-500/10'
-                      : 'bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
+        {/* Statistics Grid */}
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-slate-900/40 border border-slate-800/80 p-5 rounded-2xl flex flex-col justify-between">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Toko</p>
+            <div className="flex items-baseline justify-between mt-2">
+              <span className="text-3xl font-black text-white">{totalStores}</span>
+              <span className="text-[10px] bg-slate-800 text-slate-300 font-bold px-2 py-0.5 rounded-md">Mitra</span>
             </div>
           </div>
+          <div className="bg-emerald-500/5 border border-emerald-500/10 p-5 rounded-2xl flex flex-col justify-between">
+            <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Toko Aktif</p>
+            <div className="flex items-baseline justify-between mt-2">
+              <span className="text-3xl font-black text-emerald-400">{activeStores}</span>
+              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-bold px-2 py-0.5 rounded-md">Lancar</span>
+            </div>
+          </div>
+          <div className="bg-amber-500/5 border border-amber-500/10 p-5 rounded-2xl flex flex-col justify-between">
+            <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">Hampir Habis</p>
+            <div className="flex items-baseline justify-between mt-2">
+              <span className="text-3xl font-black text-amber-400">{expiringStores}</span>
+              <span className="text-[10px] bg-amber-500/10 text-amber-400 font-bold px-2 py-0.5 rounded-md">&lt;= 7 Hari</span>
+            </div>
+          </div>
+          <div className="bg-rose-500/5 border border-rose-500/10 p-5 rounded-2xl flex flex-col justify-between">
+            <p className="text-xs font-semibold text-rose-400 uppercase tracking-wider">Kedaluwarsa</p>
+            <div className="flex items-baseline justify-between mt-2">
+              <span className="text-3xl font-black text-rose-400">{expiredStores}</span>
+              <span className="text-[10px] bg-rose-500/10 text-rose-400 font-bold px-2 py-0.5 rounded-md">Expired</span>
+            </div>
+          </div>
+        </section>
 
-          {loading ? (
-            <div className="py-16 text-center text-slate-500">Memuat daftar toko...</div>
-          ) : (
-            <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl overflow-hidden shadow-xl">
-              <div className="overflow-x-auto text-sm">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px] tracking-wider bg-slate-900/60">
-                      <th className="px-6 py-4">Nama Toko</th>
-                      <th className="px-6 py-4">Tipe Plan</th>
-                      <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4">Masa Aktif</th>
-                      <th className="px-6 py-4 text-right">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60">
-                    {filteredStores.length === 0 ? (
-                      <tr>
-                        <td colSpan="5" className="px-6 py-10 text-center text-slate-500">
-                          Tidak ada toko yang cocok.
-                        </td>
+        {/* Dashboard Split View */}
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          {/* LEFT COLUMN: Stores List */}
+          <section className="flex-1 w-full space-y-6">
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+              <h2 className="text-lg font-bold text-white self-start sm:self-auto flex items-center gap-2">
+                Daftar Toko Terdaftar
+                <span className="text-xs text-slate-500 font-normal">({filteredStores.length} hasil)</span>
+              </h2>
+              
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                {/* Search */}
+                <div className="relative text-xs w-full sm:w-64">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Cari toko berdasarkan nama..."
+                    className="w-full bg-slate-900/60 border border-slate-800/80 rounded-xl pl-9 pr-4 py-2.5 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-violet-500 transition-colors"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+
+                {/* Filters */}
+                <div className="flex gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+                  {['Semua', 'Aktif', 'Hampir Habis', 'Kedaluwarsa'].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setStatusFilter(f)}
+                      className={`px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition-all ${
+                        statusFilter === f
+                          ? 'bg-violet-500 text-slate-950 shadow-md shadow-violet-500/10'
+                          : 'bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="py-24 text-center text-slate-500">Memuat daftar toko...</div>
+            ) : (
+              <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl">
+                <div className="overflow-x-auto text-sm">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-800 text-slate-500 font-semibold uppercase text-[10px] tracking-wider bg-slate-900/60">
+                        <th className="px-6 py-4">Nama Toko & Tipe</th>
+                        <th className="px-6 py-4">Tipe Plan</th>
+                        <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4">Masa Aktif</th>
+                        <th className="px-6 py-4 text-right">Aksi</th>
                       </tr>
-                    ) : (
-                      filteredStores.map((st) => {
-                        const status = getSubscriptionStatus(st);
-                        const endStr = st.subscription_end
-                          ? new Date(st.subscription_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-                          : 'Selamanya';
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {filteredStores.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
+                            Tidak ada toko terdaftar yang cocok dengan kriteria.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredStores.map((st) => {
+                          const status = getSubscriptionStatus(st);
+                          const endStr = st.subscription_end
+                            ? new Date(st.subscription_end).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                            : 'Selamanya';
 
-                        return (
-                          <tr key={st.id} className={`hover:bg-slate-800/20 transition-colors ${selectedStore?.id === st.id ? 'bg-violet-500/5' : ''}`}>
-                            <td className="px-6 py-4">
-                              <div className="font-bold text-slate-100">{st.name}</div>
-                              <div className="text-[10px] text-slate-500">{st.business_type}</div>
-                            </td>
-                            <td className="px-6 py-4 font-semibold text-slate-300">{st.plan}</td>
-                            <td className="px-6 py-4">
-                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${status.color}`}>
-                                {status.text}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-xs text-slate-400">{endStr}</td>
-                            <td className="px-6 py-4 text-right">
-                              <button
-                                onClick={() => {
-                                  setSelectedStore(st);
-                                  // Reset phone state if available
-                                  setOwnerPhone('');
-                                }}
-                                className="px-3.5 py-1.5 bg-violet-500 hover:bg-violet-400 text-slate-950 font-bold rounded-lg text-xs hover-scale transition-all"
-                              >
-                                Kelola
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+                          return (
+                            <tr key={st.id} className={`hover:bg-slate-800/15 transition-colors ${selectedStore?.id === st.id ? 'bg-violet-500/5' : ''}`}>
+                              <td className="px-6 py-4">
+                                <div className="font-bold text-slate-100">{st.name}</div>
+                                <div className="text-[10px] text-slate-500">{st.business_type}</div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`px-2 py-1 rounded text-xs font-semibold bg-slate-950 text-slate-300 border border-slate-800`}>
+                                  {st.plan}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${status.color}`}>
+                                  {status.text}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-xs text-slate-400 font-mono">{endStr}</td>
+                              <td className="px-6 py-4 text-right">
+                                <button
+                                  onClick={() => {
+                                    setSelectedStore(st);
+                                    setOwnerPhone('');
+                                  }}
+                                  className="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-xl text-xs hover-scale transition-all"
+                                >
+                                  Kelola
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          )}
-        </section>
+            )}
+          </section>
 
-        {/* RIGHT COLUMN: Action Management Panel */}
-        <section className="w-full lg:w-96 shrink-0 space-y-6">
-          {selectedStore ? (
-            <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-6 shadow-2xl animate-zoom-in">
-              <div>
-                <span className="text-[10px] text-violet-400 font-extrabold uppercase tracking-widest">KELOLA TOKO</span>
-                <h3 className="font-extrabold text-xl text-white mt-1">{selectedStore.name}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">ID: {selectedStore.id.slice(0, 8)}</p>
-              </div>
-
-              {/* ACTION FORM */}
-              <form onSubmit={handleAdminActionSubmit} className="space-y-4 text-sm">
+          {/* RIGHT COLUMN: Action Management Panel */}
+          <section className="w-full lg:w-96 shrink-0 space-y-6">
+            {selectedStore ? (
+              <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-6 shadow-2xl animate-zoom-in">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                    Jenis Tindakan Billing
-                  </label>
-                  <div className="grid grid-cols-3 gap-1">
-                    {[
-                      { type: 'renew', text: 'Perpanjang' },
-                      { type: 'activate', text: 'Aktifkan' },
-                      { type: 'change_plan', text: 'Ubah Plan' }
-                    ].map((opt) => (
-                      <button
-                        key={opt.type}
-                        type="button"
-                        onClick={() => setActionType(opt.type)}
-                        className={`py-2 rounded-lg font-bold text-[10px] uppercase border transition-all ${
-                          actionType === opt.type
-                            ? 'bg-violet-500 border-violet-500 text-slate-950'
-                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-850'
-                        }`}
+                  <span className="text-[10px] text-violet-400 font-extrabold uppercase tracking-widest">Billing Controller</span>
+                  <h3 className="font-extrabold text-xl text-white mt-1">{selectedStore.name}</h3>
+                  <p className="text-[10px] text-slate-500 font-mono mt-0.5">ID: {selectedStore.id}</p>
+                </div>
+
+                {/* ACTION FORM */}
+                <form onSubmit={handleAdminActionSubmit} className="space-y-4 text-sm">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                      Jenis Tindakan Billing
+                    </label>
+                    <div className="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800/80">
+                      {[
+                        { type: 'renew', text: 'Perpanjang' },
+                        { type: 'activate', text: 'Aktifkan' },
+                        { type: 'change_plan', text: 'Ubah Plan' }
+                      ].map((opt) => (
+                        <button
+                          key={opt.type}
+                          type="button"
+                          onClick={() => setActionType(opt.type)}
+                          className={`py-2 rounded-lg font-bold text-[9px] uppercase transition-all ${
+                            actionType === opt.type
+                              ? 'bg-violet-600 text-white shadow-md'
+                              : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
+                          }`}
+                        >
+                          {opt.text}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* If type is NOT renew, let them select plan */}
+                  {actionType !== 'renew' && (
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Pilih Paket Plan
+                      </label>
+                      <select
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-violet-500"
+                        value={selectedPlan}
+                        onChange={(e) => setSelectedPlan(e.target.value)}
                       >
-                        {opt.text}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* If type is NOT renew, let them select plan */}
-                {actionType !== 'renew' && (
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                      Pilih Paket Plan
-                    </label>
-                    <select
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-violet-500"
-                      value={selectedPlan}
-                      onChange={(e) => setSelectedPlan(e.target.value)}
-                    >
-                      <option value="Gratis">Gratis (Rp 0/bln)</option>
-                      <option value="Usaha">Usaha (Rp 49.000/bln)</option>
-                      <option value="Berkembang">Berkembang (Rp 99.000/bln)</option>
-                      <option value="Bisnis">Bisnis (Rp 199.000/bln)</option>
-                    </select>
-                  </div>
-                )}
-
-                {/* If type is NOT change_plan, let them select period */}
-                {actionType !== 'change_plan' && (
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                      Durasi Langganan (Bulan)
-                    </label>
-                    <select
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-violet-500"
-                      value={months}
-                      onChange={(e) => setMonths(e.target.value)}
-                    >
-                      <option value="1">1 Bulan</option>
-                      <option value="3">3 Bulan</option>
-                      <option value="6">6 Bulan</option>
-                      <option value="12">12 Bulan (1 Tahun)</option>
-                    </select>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-                    Catatan Audit
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="cth: Pembayaran via Transfer Bank BCA"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-violet-500"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={submitLoading}
-                  className="w-full bg-violet-500 hover:bg-violet-400 text-slate-950 font-bold py-3 rounded-xl shadow-lg flex justify-center items-center gap-2 tap-effect"
-                >
-                  {submitLoading ? (
-                    <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    'Terapkan Perubahan Billing'
+                        <option value="Gratis">Gratis (Rp 0/bln)</option>
+                        <option value="Usaha">Usaha (Rp 49.000/bln)</option>
+                        <option value="Berkembang">Berkembang (Rp 99.000/bln)</option>
+                        <option value="Bisnis">Bisnis (Rp 199.000/bln)</option>
+                      </select>
+                    </div>
                   )}
-                </button>
-              </form>
 
-              {/* WHATSAPP FOLLOW UP SHORTCUT */}
-              <div className="border-t border-slate-800 pt-5 space-y-3">
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Hubungi Pemilik via WA
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="cth: 085163612553"
-                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500"
-                    value={ownerPhone}
-                    onChange={(e) => setOwnerPhone(e.target.value)}
-                  />
-                  <a
-                    href={getWhatsAppShortcutLink(selectedStore)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2.5 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shrink-0"
+                  {/* If type is NOT change_plan, let them select period */}
+                  {actionType !== 'change_plan' && (
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                        Durasi Langganan
+                      </label>
+                      <select
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-violet-500"
+                        value={months}
+                        onChange={(e) => setMonths(e.target.value)}
+                      >
+                        <option value="1">1 Bulan</option>
+                        <option value="3">3 Bulan</option>
+                        <option value="6">6 Bulan</option>
+                        <option value="12">12 Bulan (1 Tahun)</option>
+                      </select>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                      Catatan Audit
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="cth: Pembayaran via Transfer Bank BCA"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-violet-500"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submitLoading}
+                    className="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-3 rounded-xl shadow-lg flex justify-center items-center gap-2 transition-colors mt-2"
                   >
-                    Hubungi
-                  </a>
-                </div>
-                <p className="text-[10px] text-slate-500">Membuka WhatsApp langsung dengan pesan reminder masa aktif terisi otomatis.</p>
-              </div>
+                    {submitLoading ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      'Terapkan Perubahan Billing'
+                    )}
+                  </button>
+                </form>
 
-              {/* SHOW LOGS FOR THIS STORE */}
-              <div className="border-t border-slate-800 pt-5 space-y-3">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Riwayat Log Langganan</h4>
-                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                  {logs.filter(l => l.store_id === selectedStore.id).length === 0 ? (
-                    <p className="text-slate-600 text-xs">Belum ada riwayat perubahan.</p>
-                  ) : (
-                    logs
-                      .filter(l => l.store_id === selectedStore.id)
-                      .map((log) => (
-                        <div key={log.id} className="bg-slate-950/60 border border-slate-850 p-3 rounded-xl text-xs space-y-1.5">
-                          <div className="flex justify-between items-center text-[10px]">
-                            <span className="text-violet-400 font-bold uppercase">{log.action}</span>
-                            <span className="text-slate-500">
-                              {new Date(log.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                            </span>
+                {/* WHATSAPP FOLLOW UP SHORTCUT */}
+                <div className="border-t border-slate-800/80 pt-5 space-y-3">
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Hubungi Pemilik via WA
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="cth: 085163612553"
+                      className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500"
+                      value={ownerPhone}
+                      onChange={(e) => setOwnerPhone(e.target.value)}
+                    />
+                    <a
+                      href={getWhatsAppShortcutLink(selectedStore)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-slate-950 px-4 py-2.5 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shrink-0 transition-colors"
+                    >
+                      Hubungi
+                    </a>
+                  </div>
+                  <p className="text-[10px] text-slate-500 leading-normal">Membuka WhatsApp langsung dengan pesan reminder masa aktif terisi otomatis.</p>
+                </div>
+
+                {/* SHOW LOGS FOR THIS STORE */}
+                <div className="border-t border-slate-800/80 pt-5 space-y-3">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Riwayat Log Langganan</h4>
+                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                    {logs.filter(l => l.store_id === selectedStore.id).length === 0 ? (
+                      <p className="text-slate-600 text-xs">Belum ada riwayat perubahan.</p>
+                    ) : (
+                      logs
+                        .filter(l => l.store_id === selectedStore.id)
+                        .map((log) => (
+                          <div key={log.id} className="bg-slate-950/65 border border-slate-850 p-3 rounded-xl text-[11px] space-y-1.5">
+                            <div className="flex justify-between items-center text-[10px]">
+                              <span className="text-violet-400 font-bold uppercase">{log.action}</span>
+                              <span className="text-slate-500">
+                                {new Date(log.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                              </span>
+                            </div>
+                            <p className="text-slate-300 font-semibold">{log.plan_before} → {log.plan_after} {log.period_months ? `(${log.period_months} bln)` : ''}</p>
+                            {log.notes && <p className="text-slate-500 italic text-[10px]">Note: {log.notes}</p>}
                           </div>
-                          <p className="text-slate-300 font-semibold">{log.plan_before} → {log.plan_after} {log.period_months ? `(${log.period_months} bln)` : ''}</p>
-                          {log.notes && <p className="text-slate-500 italic text-[10px]">Note: {log.notes}</p>}
-                        </div>
-                      ))
-                  )}
+                        ))
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="h-48 border-2 border-dashed border-slate-800 rounded-3xl flex flex-col items-center justify-center text-center text-slate-600 p-6">
-              <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-              <p className="text-sm font-semibold">Pilih toko di tabel sebelah kiri untuk mengelola paket berlangganan atau follow up.</p>
-            </div>
-          )}
-        </section>
+            ) : (
+              <div className="h-64 border-2 border-dashed border-slate-800/80 rounded-2xl flex flex-col items-center justify-center text-center text-slate-600 p-6">
+                <svg className="w-10 h-10 mb-3 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                <p className="text-xs font-semibold max-w-[200px] leading-relaxed">Pilih salah satu toko di daftar tabel untuk mengelola paket, billing, atau menghubungi pemilik toko.</p>
+              </div>
+            )}
+          </section>
+        </div>
 
       </main>
     </div>
