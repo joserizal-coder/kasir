@@ -80,7 +80,7 @@ export default function Home() {
       <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-emerald-400 font-semibold tracking-wide">Memuat KasirKu...</p>
+          <p className="text-emerald-400 font-semibold tracking-wide">Memuat Kasir Kita...</p>
         </div>
       </div>
     );
@@ -149,7 +149,7 @@ export default function Home() {
           {/* Auth Card */}
           <div className="w-full max-w-md bg-slate-900/50 backdrop-blur-xl border border-slate-800 p-8 rounded-3xl shadow-2xl">
             <h2 className="text-2xl font-bold mb-2">
-              {isRegister ? 'Buat Akun Baru' : 'Masuk ke KasirKu'}
+              {isRegister ? 'Buat Akun Baru' : 'Masuk ke Kasir Kita'}
             </h2>
             <p className="text-slate-400 text-sm mb-6">
               {isRegister 
@@ -429,7 +429,7 @@ export default function Home() {
               </Link>
             )}
             <a
-              href={`https://wa.me/6285163612553?text=Halo%20Admin%20KasirKu,%20saya%20ingin%20upgrade%20langganan%20toko%20${encodeURIComponent(store.name)}`}
+              href={`https://wa.me/6285163612553?text=Halo%20Admin%20Kasir%20Kita,%20saya%20ingin%20upgrade%20langganan%20toko%20${encodeURIComponent(store.name)}`}
               target="_blank"
               rel="noreferrer"
               className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-bold rounded-xl shadow-lg transition-all"

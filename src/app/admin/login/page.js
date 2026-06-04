@@ -53,7 +53,7 @@ export default function AdminLoginPage() {
         if (!ADMIN_EMAIL) {
           setError('Gagal masuk: Konfigurasi NEXT_PUBLIC_ADMIN_EMAIL belum terbaca oleh sistem. Silakan restart server dev lokal Anda.');
         } else {
-          setError('Akses ditolak. Email ini tidak terdaftar sebagai Administrator KasirKu.');
+          setError('Akses ditolak. Email ini tidak terdaftar sebagai Administrator Kasir Kita.');
         }
       }
     } catch (err) {
@@ -108,7 +108,7 @@ export default function AdminLoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@kasirku.id"
+              placeholder="admin@kasirkita.id"
               className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3.5 text-slate-100 placeholder:text-slate-700 focus:outline-none focus:border-violet-500 transition-colors text-sm"
             />
           </div>

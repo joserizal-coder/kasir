@@ -147,7 +147,7 @@ export default function AdminPage() {
       : '-';
 
     const text = `Halo Kak pemilik toko *${storeObj.name}*,\n\n` +
-      `Kami ingin menginfokan bahwa masa aktif langganan *KasirKu* Anda akan berakhir pada *${endStr}*.\n\n` +
+      `Kami ingin menginfokan bahwa masa aktif langganan *Kasir Kita* Anda akan berakhir pada *${endStr}*.\n\n` +
       `Silakan hubungi kami kembali di nomor ini (085163612553) untuk melakukan perpanjangan paket agar transaksi kasir Anda tidak terhambat.\n\n` +
       `Terima kasih!`;
 
@@ -210,7 +210,7 @@ export default function AdminPage() {
           </Link>
           <div>
             <h1 className="font-extrabold text-lg flex items-center gap-2">
-              Kasir<span className="text-violet-400">Ku</span> Console
+              Kasir Kita<span className="text-violet-400">Console</span>
               <span className="bg-violet-500/10 text-violet-400 text-[10px] font-black uppercase px-2 py-0.5 rounded-md border border-violet-500/20">
                 Back-Office
               </span>

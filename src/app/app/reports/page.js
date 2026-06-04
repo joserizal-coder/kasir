@@ -221,7 +221,7 @@ export default function ReportsPage() {
 
             <div className="space-y-1">
               <span className="bg-slate-950 text-emerald-400 font-black px-3 py-1 rounded-full text-[9px] tracking-wider uppercase">
-                Fitur Kunci KasirKu
+                Fitur Kunci Kasir Kita
               </span>
               <h3 className="text-xl sm:text-2xl font-black tracking-tight mt-2 text-white">Laporan PPh Final 0.5% Otomatis</h3>
               <p className="text-white/80 text-xs sm:text-sm">

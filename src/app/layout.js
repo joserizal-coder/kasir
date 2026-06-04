@@ -2,7 +2,7 @@ import { AppProvider } from '../context/AppContext';
 import './globals.css';
 
 export const metadata = {
-  title: "KasirKu - Aplikasi Kasir & Pembukuan UKM Indonesia",
+  title: "Kasir Kita - Aplikasi Kasir & Pembukuan UKM Indonesia",
   description: "Platform Kasir & Pembukuan Simpel, Terjangkau, dan Bisa Offline khusus untuk UKM Indonesia.",
   manifest: "/manifest.json",
   icons: {

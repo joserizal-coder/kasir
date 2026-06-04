@@ -1,7 +1,7 @@
 import Dexie from 'dexie';
 
 // Initialize the IndexedDB local database for offline-first capabilities
-export const db = new Dexie('KasirKuDB');
+export const db = new Dexie('KasirKitaDB');
 
 if (typeof window !== 'undefined') {
   window.db = db;
