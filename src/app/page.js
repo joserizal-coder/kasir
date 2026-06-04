@@ -101,7 +101,7 @@ export default function Home() {
               K
             </div>
             <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-              Kasir<span className="text-emerald-400">Ku</span>
+              Kasir<span className="text-emerald-400">Kita</span>
             </span>
           </div>
           <div className="flex items-center gap-4">
