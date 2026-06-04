@@ -155,6 +155,8 @@ export default function CashierPage() {
             </button>
           </form>
 
+          <p className="text-[10px] text-slate-500 italic">Petunjuk: PIN default pemilik toko adalah 1234</p>
+
           <Link href="/" className="inline-block text-slate-400 hover:text-white text-sm pt-2 hover:underline">
             Kembali ke Beranda
           </Link>
