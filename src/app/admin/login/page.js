@@ -87,7 +87,7 @@ export default function AdminLoginPage() {
             K
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight">Kasir<span className="text-violet-400">Ku</span> Admin</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight">Kasir<span className="text-violet-400">Kita</span> Admin</h1>
             <p className="text-xs text-slate-400 mt-1 uppercase tracking-widest font-semibold">Security Gate</p>
           </div>
         </div>
