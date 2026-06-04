@@ -12,6 +12,7 @@ export default function Home() {
     store,
     cashier,
     online,
+    syncing,
     products,
     createStore,
     triggerSync
