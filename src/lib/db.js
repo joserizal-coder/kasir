@@ -3,6 +3,10 @@ import Dexie from 'dexie';
 // Initialize the IndexedDB local database for offline-first capabilities
 export const db = new Dexie('KasirKuDB');
 
+if (typeof window !== 'undefined') {
+  window.db = db;
+}
+
 // Define database schema
 // Note: Only index columns that will be queried in filters or joins (e.g. store_id, transaction_id, synced_at)
 db.version(1).stores({
