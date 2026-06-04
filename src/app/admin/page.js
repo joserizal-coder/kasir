@@ -2,12 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { supabase } from '../../lib/supabase';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
 export default function AdminPage() {
-  const { user } = useApp();
+  const { user, loading: authLoading } = useApp();
+  const router = useRouter();
   
   const [stores, setStores] = useState([]);
   const [logs, setLogs] = useState([]);
@@ -26,17 +29,27 @@ export default function AdminPage() {
 
   useEffect(() => {
     // Only fetch if user is verified admin
-    if (user && user.email === ADMIN_EMAIL) {
-      fetchAdminData();
-    } else if (user) {
-      setLoading(false);
+    if (!authLoading) {
+      if (!user || user.email !== ADMIN_EMAIL) {
+        router.push('/admin/login');
+      } else {
+        fetchAdminData();
+      }
     }
-  }, [user]);
+  }, [user, authLoading, router]);
 
   const fetchAdminData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin');
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
+      const res = await fetch('/api/admin', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const data = await res.json();
       if (data.stores) {
         setStores(data.stores);
@@ -55,9 +68,15 @@ export default function AdminPage() {
 
     setSubmitLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const res = await fetch('/api/admin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           storeId: selectedStore.id,
           action: actionType,
@@ -137,30 +156,14 @@ export default function AdminPage() {
     return `https://wa.me/${targetPhone || ''}?text=${encodeURIComponent(text)}`;
   };
 
-  // ACCESS CONTROL: Block non-admin users
-  if (!user) {
+  // ACCESS CONTROL: Block non-admin users with clean redirect
+  if (authLoading || !user || user.email !== ADMIN_EMAIL) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center gap-4">
-        <p className="text-slate-400">Silakan login terlebih dahulu.</p>
-        <Link href="/" className="px-6 py-2.5 bg-emerald-500 text-slate-950 font-bold rounded-xl">Ke Halaman Login</Link>
-      </div>
-    );
-  }
-
-  if (user.email !== ADMIN_EMAIL) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center gap-6 px-6">
-        <div className="w-20 h-20 bg-rose-500/10 text-rose-400 rounded-full flex items-center justify-center text-4xl">
-          🚫
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-violet-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-violet-400 font-semibold tracking-wide">Memverifikasi Gerbang Keamanan...</p>
         </div>
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-extrabold text-white">Akses Ditolak</h1>
-          <p className="text-slate-400 text-sm">Halaman ini hanya dapat diakses oleh administrator sistem KasirKu.</p>
-          <p className="text-slate-600 text-xs">Login sebagai: {user.email}</p>
-        </div>
-        <Link href="/" className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl transition-all">
-          Kembali ke Dashboard
-        </Link>
       </div>
     );
   }
@@ -182,6 +185,19 @@ export default function AdminPage() {
             </h1>
             <p className="text-[10px] text-slate-400">Kelola aktivasi & perpanjangan paket berlangganan manual</p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-slate-400 hidden sm:inline">{user?.email}</span>
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.push('/admin/login');
+            }}
+            className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs transition-all font-semibold"
+          >
+            Keluar Admin
+          </button>
         </div>
       </header>
 

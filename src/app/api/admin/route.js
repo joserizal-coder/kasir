@@ -18,6 +18,18 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 // GET: Fetch all stores and subscription logs bypassing RLS
 export async function GET(request) {
   try {
+    // 1. Verify token
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized: Missing token' }, { status: 401 });
+    }
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user || user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+      return NextResponse.json({ error: 'Unauthorized: Invalid token or user' }, { status: 401 });
+    }
+
     const { data: stores, error: storesError } = await supabaseAdmin
       .from('stores')
       .select('*')
@@ -41,6 +53,18 @@ export async function GET(request) {
 // POST: Manage subscriptions (activate, renew, change plan)
 export async function POST(request) {
   try {
+    // 1. Verify token
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized: Missing token' }, { status: 401 });
+    }
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user || user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+      return NextResponse.json({ error: 'Unauthorized: Invalid token or user' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { storeId, action, plan, months, notes, adminId } = body;
 
