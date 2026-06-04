@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import Link from 'next/link';
 
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
 export default function AdminPage() {
   const { user } = useApp();
   
@@ -23,8 +25,13 @@ export default function AdminPage() {
   const [ownerPhone, setOwnerPhone] = useState('');
 
   useEffect(() => {
-    fetchAdminData();
-  }, []);
+    // Only fetch if user is verified admin
+    if (user && user.email === ADMIN_EMAIL) {
+      fetchAdminData();
+    } else if (user) {
+      setLoading(false);
+    }
+  }, [user]);
 
   const fetchAdminData = async () => {
     try {
@@ -129,6 +136,34 @@ export default function AdminPage() {
 
     return `https://wa.me/${targetPhone || ''}?text=${encodeURIComponent(text)}`;
   };
+
+  // ACCESS CONTROL: Block non-admin users
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center gap-4">
+        <p className="text-slate-400">Silakan login terlebih dahulu.</p>
+        <Link href="/" className="px-6 py-2.5 bg-emerald-500 text-slate-950 font-bold rounded-xl">Ke Halaman Login</Link>
+      </div>
+    );
+  }
+
+  if (user.email !== ADMIN_EMAIL) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center gap-6 px-6">
+        <div className="w-20 h-20 bg-rose-500/10 text-rose-400 rounded-full flex items-center justify-center text-4xl">
+          🚫
+        </div>
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-extrabold text-white">Akses Ditolak</h1>
+          <p className="text-slate-400 text-sm">Halaman ini hanya dapat diakses oleh administrator sistem KasirKu.</p>
+          <p className="text-slate-600 text-xs">Login sebagai: {user.email}</p>
+        </div>
+        <Link href="/" className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl transition-all">
+          Kembali ke Dashboard
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
