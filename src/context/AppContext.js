@@ -561,20 +561,24 @@ export function AppProvider({ children }) {
     }
   };
 
-  // Update Store Settings
-  const updateStoreSettings = async (newSettings) => {
+  // Update Store Info (name, address, settings, etc.)
+  const updateStore = async (fields) => {
     if (!store?.id) return { success: false, error: 'No active store' };
 
     try {
       const isCurrentlyOnline = checkOnline();
       const updatedStore = {
         ...store,
-        settings: {
-          ...(store.settings || {}),
-          ...newSettings
-        },
+        ...fields,
         updated_at: new Date().toISOString()
       };
+
+      if (fields.settings) {
+        updatedStore.settings = {
+          ...(store.settings || {}),
+          ...fields.settings
+        };
+      }
 
       // 1. Save to local Dexie
       await db.stores.put(updatedStore);
@@ -582,12 +586,13 @@ export function AppProvider({ children }) {
 
       // 2. Upload to Supabase if online
       if (isCurrentlyOnline) {
+        const dbUpdate = { ...fields, updated_at: updatedStore.updated_at };
+        if (fields.settings) {
+          dbUpdate.settings = updatedStore.settings;
+        }
         const { error } = await supabase
           .from('stores')
-          .update({
-            settings: updatedStore.settings,
-            updated_at: updatedStore.updated_at
-          })
+          .update(dbUpdate)
           .eq('id', store.id);
 
         if (error) throw error;
@@ -595,10 +600,12 @@ export function AppProvider({ children }) {
 
       return { success: true, store: updatedStore };
     } catch (err) {
-      console.error('Failed to update store settings:', err);
+      console.error('Failed to update store:', err);
       return { success: false, error: err.message };
     }
   };
+
+  const updateStoreSettings = (newSettings) => updateStore({ settings: newSettings });
 
   return (
     <AppContext.Provider value={{
@@ -623,7 +630,8 @@ export function AppProvider({ children }) {
       checkout,
       addExpense,
       triggerSync,
-      updateStoreSettings
+      updateStoreSettings,
+      updateStore
     }}>
       {children}
     </AppContext.Provider>

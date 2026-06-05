@@ -124,6 +124,7 @@ export default function InvoiceModal({ transactionId, onClose }) {
           <h3 style={{ margin: '0 0 2px 0', fontSize: '14px', fontWeight: 'bold' }}>{store?.name}</h3>
           <p style={{ margin: '0', fontSize: '10px', color: '#666' }}>{store?.business_type}</p>
           {store?.address && <p style={{ margin: '2px 0 0 0', fontSize: '9px', color: '#666' }}>{store.address}</p>}
+          {store?.settings?.whatsapp_phone && <p style={{ margin: '2px 0 0 0', fontSize: '9px', color: '#666' }}>WA: {store.settings.whatsapp_phone}</p>}
         </div>
 
         <div style={{ borderBottom: '1px dashed #000', marginBottom: '8px', paddingBottom: '8px' }}>
@@ -213,6 +214,7 @@ export default function InvoiceModal({ transactionId, onClose }) {
               <h4 className="font-extrabold text-lg text-emerald-400">{store?.name}</h4>
               <p className="text-xs text-slate-400 uppercase tracking-widest">{store?.business_type}</p>
               {store?.address && <p className="text-[10px] text-slate-500">{store.address}</p>}
+              {store?.settings?.whatsapp_phone && <p className="text-[10px] text-emerald-400/80">WA: {store.settings.whatsapp_phone}</p>}
             </div>
 
             {/* Invoice meta */}
