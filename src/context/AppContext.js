@@ -22,23 +22,30 @@ export function AppProvider({ children }) {
   const [customers, setCustomers] = useState([]);
   const [expenses, setExpenses] = useState([]);
   
-  // Trigger online/offline detection
+  // Trigger online/offline detection + auto-sync saat kembali online
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     setOnline(checkOnline());
-    
-    const handleOnline = () => setOnline(true);
+
+    const handleOnline = () => {
+      setOnline(true);
+      // Langsung kirim semua data offline saat koneksi pulih
+      if (store?.id) {
+        triggerSync();
+      }
+    };
     const handleOffline = () => setOnline(false);
-    
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-    
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store?.id]);
 
   // Listen to Supabase Auth state changes
   useEffect(() => {
@@ -316,9 +323,11 @@ export function AppProvider({ children }) {
   // Products CRUD
   const saveProduct = async (productData) => {
     if (!store?.id) return { success: false, error: 'No active store' };
-    
+
     try {
       const isNew = !productData.id;
+      const isCurrentlyOnline = checkOnline();
+
       const product = {
         id: productData.id || crypto.randomUUID(),
         store_id: store.id,
@@ -330,16 +339,18 @@ export function AppProvider({ children }) {
         unit: productData.unit || 'pcs',
         is_active: productData.is_active !== undefined ? productData.is_active : true,
         created_at: productData.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        // Jika offline, tandai belum tersync agar dikirim saat online nanti
+        synced: isCurrentlyOnline
       };
 
-      // 1. Save to local Dexie
+      // 1. Simpan ke Dexie lokal
       await db.products.put(product);
-      
-      // 2. Add a stock movement log if this is a new product or if stock adjusted
+
+      // 2. Log pergerakan stok jika stok berubah
       const oldProd = isNew ? null : await db.products.get(product.id);
       const stockDiff = oldProd ? product.stock - oldProd.stock : product.stock;
-      
+
       if (stockDiff !== 0) {
         const movement = {
           id: crypto.randomUUID(),
@@ -354,13 +365,16 @@ export function AppProvider({ children }) {
         await db.stock_movements.put(movement);
       }
 
-      // 3. Save to Supabase if online
-      if (checkOnline()) {
-        await supabase.from('products').upsert(product);
+      // 3. Langsung upload ke Supabase jika online
+      if (isCurrentlyOnline) {
+        const uploadProduct = { ...product };
+        delete uploadProduct.synced;
+        await supabase.from('products').upsert(uploadProduct);
+        await db.products.update(product.id, { synced: true });
       }
 
       await loadDexieCache(store.id);
-      triggerSync(); // Queue background sync
+      triggerSync();
       return { success: true, product };
     } catch (err) {
       console.error('Error saving product:', err);
@@ -488,6 +502,7 @@ export function AppProvider({ children }) {
     if (!store?.id) return { success: false, error: 'No active store' };
 
     try {
+      const isCurrentlyOnline = checkOnline();
       const expense = {
         id: crypto.randomUUID(),
         store_id: store.id,
@@ -496,14 +511,19 @@ export function AppProvider({ children }) {
         description,
         date: new Date().toISOString().split('T')[0],
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        // Jika offline, tandai belum tersync agar dikirim saat online nanti
+        synced: isCurrentlyOnline
       };
 
       await db.expenses.put(expense);
-      if (checkOnline()) {
-        await supabase.from('expenses').insert(expense);
+      if (isCurrentlyOnline) {
+        const uploadExpense = { ...expense };
+        delete uploadExpense.synced;
+        await supabase.from('expenses').insert(uploadExpense);
+        await db.expenses.update(expense.id, { synced: true });
       }
-      
+
       await loadDexieCache(store.id);
       triggerSync();
       return { success: true };

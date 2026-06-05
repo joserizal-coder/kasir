@@ -68,12 +68,6 @@ export async function syncStockMovementsUp(storeId) {
   if (!isOnline()) return { success: false, error: 'Offline' };
 
   try {
-    // Since we don't have a synced_at in local stock_movements yet,
-    // we can either add synced_at or just insert them. Let's add synced_at check for stock_movements.
-    // For simplicity, we can fetch all stock movements and push them, or add `synced` flag.
-    // Let's check locally which stock movements are not synced. 
-    // We can add a 'synced' boolean field to stock_movements in db.js (defaults to false).
-    // Let's query unsynced ones.
     const unsyncedMovements = await db.stock_movements
       .where('store_id').equals(storeId)
       .and(mov => !mov.synced)
@@ -105,6 +99,80 @@ export async function syncStockMovementsUp(storeId) {
   }
 }
 
+// Push unsynced products to Supabase (produk yang dibuat/diubah saat offline)
+export async function syncProductsUp(storeId) {
+  if (!isOnline()) return { success: false, error: 'Offline' };
+
+  try {
+    const unsyncedProducts = await db.products
+      .where('store_id').equals(storeId)
+      .and(p => p.synced === false)
+      .toArray();
+
+    if (unsyncedProducts.length === 0) return { success: true };
+
+    console.log(`Syncing ${unsyncedProducts.length} products up...`);
+
+    const toUpload = unsyncedProducts.map(p => {
+      const copy = { ...p };
+      delete copy.synced;
+      return copy;
+    });
+
+    const { error } = await supabase
+      .from('products')
+      .upsert(toUpload);
+
+    if (error) throw error;
+
+    for (const p of unsyncedProducts) {
+      await db.products.update(p.id, { synced: true });
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error syncing products up:', error);
+    return { success: false, error };
+  }
+}
+
+// Push unsynced expenses to Supabase (pengeluaran yang dicatat saat offline)
+export async function syncExpensesUp(storeId) {
+  if (!isOnline()) return { success: false, error: 'Offline' };
+
+  try {
+    const unsyncedExpenses = await db.expenses
+      .where('store_id').equals(storeId)
+      .and(e => e.synced === false)
+      .toArray();
+
+    if (unsyncedExpenses.length === 0) return { success: true };
+
+    console.log(`Syncing ${unsyncedExpenses.length} expenses up...`);
+
+    const toUpload = unsyncedExpenses.map(e => {
+      const copy = { ...e };
+      delete copy.synced;
+      return copy;
+    });
+
+    const { error } = await supabase
+      .from('expenses')
+      .upsert(toUpload);
+
+    if (error) throw error;
+
+    for (const e of unsyncedExpenses) {
+      await db.expenses.update(e.id, { synced: true });
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error syncing expenses up:', error);
+    return { success: false, error };
+  }
+}
+
 // Pull latest products, customers, and active cashiers from Supabase to IndexedDB
 export async function syncDown(storeId) {
   if (!isOnline()) return { success: false, error: 'Offline' };
@@ -130,9 +198,10 @@ export async function syncDown(storeId) {
 
     if (productsError) throw productsError;
     if (productsData) {
-      // Clear out local products not on server to keep in sync, or just put all
+      // Tandai semua produk dari server sebagai sudah synced
+      const withSynced = productsData.map(p => ({ ...p, synced: true }));
       await db.products.where('store_id').equals(storeId).delete();
-      await db.products.bulkPut(productsData);
+      await db.products.bulkPut(withSynced);
     }
 
     // 3. Sync Customers
@@ -167,8 +236,9 @@ export async function syncDown(storeId) {
 
     if (expensesError) throw expensesError;
     if (expensesData) {
+      const withSynced = expensesData.map(e => ({ ...e, synced: true }));
       await db.expenses.where('store_id').equals(storeId).delete();
-      await db.expenses.bulkPut(expensesData);
+      await db.expenses.bulkPut(withSynced);
     }
 
     // 6. Sync Subscription Logs (Store owner can view)
@@ -193,18 +263,23 @@ export async function syncDown(storeId) {
 // Global helper to trigger both upload and download sync
 export async function syncAll(storeId) {
   if (!storeId) return { success: false, error: 'No store ID provided' };
-  
-  // First sync up changes
-  const txUp = await syncTransactionsUp(storeId);
-  const movUp = await syncStockMovementsUp(storeId);
-  
-  // Then sync down latest records
+  if (!isOnline()) return { success: false, error: 'Offline' };
+
+  // Upload semua data lokal yang belum tersinkronisasi
+  const txUp   = await syncTransactionsUp(storeId);
+  const movUp  = await syncStockMovementsUp(storeId);
+  const prodUp = await syncProductsUp(storeId);
+  const expUp  = await syncExpensesUp(storeId);
+
+  // Download data terbaru dari server
   const down = await syncDown(storeId);
 
   return {
-    success: txUp.success && movUp.success && down.success,
+    success: txUp.success && movUp.success && prodUp.success && expUp.success && down.success,
     txUp,
     movUp,
+    prodUp,
+    expUp,
     down
   };
 }
@@ -218,32 +293,20 @@ export function startPeriodicSync(storeId, intervalMs = 30000) {
   // Stop any existing sync
   stopPeriodicSync();
 
-  // Run sync immediately
-  syncAll(storeId);
+  // Jalankan sync pertama segera (hanya jika online)
+  if (isOnline()) {
+    syncAll(storeId);
+  }
 
-  // Set up periodic timer
+  // Timer periodik — syncAll sudah punya guard isOnline() di dalamnya
   syncIntervalId = setInterval(() => {
     syncAll(storeId);
   }, intervalMs);
-
-  // Set up online event listener to trigger immediate sync when connection is restored
-  const handleOnline = () => {
-    console.log('App came online. Triggering immediate sync...');
-    syncAll(storeId);
-  };
-  window.addEventListener('online', handleOnline);
-
-  // Store cleanup handler
-  window._syncOnlineHandler = handleOnline;
 }
 
 export function stopPeriodicSync() {
   if (syncIntervalId) {
     clearInterval(syncIntervalId);
     syncIntervalId = null;
-  }
-  if (typeof window !== 'undefined' && window._syncOnlineHandler) {
-    window.removeEventListener('online', window._syncOnlineHandler);
-    delete window._syncOnlineHandler;
   }
 }

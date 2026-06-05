@@ -7,8 +7,7 @@ if (typeof window !== 'undefined') {
   window.db = db;
 }
 
-// Define database schema
-// Note: Only index columns that will be queried in filters or joins (e.g. store_id, transaction_id, synced_at)
+// v1 — schema awal
 db.version(1).stores({
   stores: 'id, owner_id, plan',
   products: 'id, store_id, category, is_active',
@@ -17,6 +16,20 @@ db.version(1).stores({
   stock_movements: 'id, store_id, product_id, type',
   customers: 'id, store_id, name',
   expenses: 'id, store_id, category, date',
+  cashiers: 'id, store_id, user_id, pin, is_active',
+  subscription_logs: 'id, store_id, admin_id, action'
+});
+
+// v2 — tambah indeks `synced` pada products, expenses, dan stock_movements
+//       agar data yang dibuat saat offline bisa di-detect dan di-upload saat online
+db.version(2).stores({
+  stores: 'id, owner_id, plan',
+  products: 'id, store_id, category, is_active, synced',
+  transactions: 'id, store_id, cashier_id, payment_method, status, synced_at, created_at',
+  transaction_items: 'id, transaction_id, product_id',
+  stock_movements: 'id, store_id, product_id, type, synced',
+  customers: 'id, store_id, name',
+  expenses: 'id, store_id, category, date, synced',
   cashiers: 'id, store_id, user_id, pin, is_active',
   subscription_logs: 'id, store_id, admin_id, action'
 });
