@@ -825,55 +825,70 @@ export default function Home() {
                 Pilih Paket
               </label>
               <div className="grid grid-cols-1 gap-3">
-                {[
-                  {
-                    id: 'Usaha',
-                    name: 'Paket Usaha',
-                    price: 'Rp 49.000',
-                    period: '/bulan',
-                    desc: 'Transaksi tanpa batas, QRIS kustom, laporan pajak, & pencatatan struk thermal.',
-                    color: 'border-violet-600/30 text-violet-400 bg-violet-600/5 hover:bg-violet-600/10'
-                  },
-                  {
-                    id: 'Berkembang',
-                    name: 'Paket Berkembang',
-                    price: 'Rp 99.000',
-                    period: '/bulan',
-                    desc: 'Semua fitur Usaha + dukung hingga 5 akun kasir karyawan & kelola multi-otoritas.',
-                    color: 'border-emerald-600/30 text-emerald-400 bg-emerald-600/5 hover:bg-emerald-600/10'
-                  },
-                  {
-                    id: 'Bisnis',
-                    name: 'Paket Bisnis',
-                    price: 'Rp 199.000',
-                    period: '/bulan',
-                    desc: 'Semua fitur Berkembang + manajemen multi-toko (cabang), & inventaris stok lanjutan.',
-                    color: 'border-amber-600/30 text-amber-400 bg-amber-600/5 hover:bg-amber-600/10'
-                  }
-                ].map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setUpgradePlan(p.id)}
-                    className={`text-left p-4 rounded-2xl border transition-all flex flex-col sm:flex-row justify-between gap-3 ${
-                      upgradePlan === p.id
-                        ? 'border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/5'
-                        : 'border-slate-800 bg-slate-950/40 hover:bg-slate-900/60'
-                    }`}
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${upgradePlan === p.id ? 'bg-emerald-400' : 'bg-slate-700'}`}></span>
-                        <h4 className="font-extrabold text-sm text-slate-100">{p.name}</h4>
-                      </div>
-                      <p className="text-xs text-slate-400 leading-relaxed max-w-sm">{p.desc}</p>
+                {/* Paket Usaha — Tersedia */}
+                <button
+                  type="button"
+                  onClick={() => setUpgradePlan('Usaha')}
+                  className={`text-left p-4 rounded-2xl border transition-all flex flex-col sm:flex-row justify-between gap-3 ${
+                    upgradePlan === 'Usaha'
+                      ? 'border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/5'
+                      : 'border-slate-800 bg-slate-950/40 hover:bg-slate-900/60'
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${upgradePlan === 'Usaha' ? 'bg-emerald-400' : 'bg-slate-700'}`}></span>
+                      <h4 className="font-extrabold text-sm text-slate-100">Paket Usaha</h4>
                     </div>
-                    <div className="sm:text-right shrink-0">
-                      <p className="font-black text-sm text-emerald-400">{p.price}</p>
-                      <p className="text-[10px] text-slate-500">{p.period}</p>
+                    <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
+                      Transaksi tanpa batas, QRIS kustom, laporan pajak, & pencatatan struk thermal.
+                    </p>
+                  </div>
+                  <div className="sm:text-right shrink-0">
+                    <p className="font-black text-sm text-emerald-400">Rp 49.000</p>
+                    <p className="text-[10px] text-slate-500">/bulan</p>
+                  </div>
+                </button>
+
+                {/* Paket Berkembang — Coming Soon */}
+                <div className="relative p-4 rounded-2xl border border-slate-800/50 bg-slate-950/20 opacity-60 cursor-not-allowed flex flex-col sm:flex-row justify-between gap-3">
+                  <div className="absolute top-3 right-3">
+                    <span className="bg-slate-800 text-slate-400 text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full">Segera Hadir</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-slate-700"></span>
+                      <h4 className="font-extrabold text-sm text-slate-500">Paket Berkembang</h4>
                     </div>
-                  </button>
-                ))}
+                    <p className="text-xs text-slate-600 leading-relaxed max-w-sm">
+                      Semua fitur Usaha + dukung hingga 5 akun kasir karyawan & kelola multi-otoritas.
+                    </p>
+                  </div>
+                  <div className="sm:text-right shrink-0">
+                    <p className="font-black text-sm text-slate-600">Rp 99.000</p>
+                    <p className="text-[10px] text-slate-700">/bulan</p>
+                  </div>
+                </div>
+
+                {/* Paket Bisnis — Coming Soon */}
+                <div className="relative p-4 rounded-2xl border border-slate-800/50 bg-slate-950/20 opacity-60 cursor-not-allowed flex flex-col sm:flex-row justify-between gap-3">
+                  <div className="absolute top-3 right-3">
+                    <span className="bg-slate-800 text-slate-400 text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-full">Segera Hadir</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-slate-700"></span>
+                      <h4 className="font-extrabold text-sm text-slate-500">Paket Bisnis</h4>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed max-w-sm">
+                      Semua fitur Berkembang + manajemen multi-toko (cabang), & inventaris stok lanjutan.
+                    </p>
+                  </div>
+                  <div className="sm:text-right shrink-0">
+                    <p className="font-black text-sm text-slate-600">Rp 199.000</p>
+                    <p className="text-[10px] text-slate-700">/bulan</p>
+                  </div>
+                </div>
               </div>
             </div>
 
