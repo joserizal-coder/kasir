@@ -15,7 +15,8 @@ export default function Home() {
     syncing,
     products,
     createStore,
-    triggerSync
+    triggerSync,
+    updateStoreSettings
   } = useApp();
 
   // Auth form states
@@ -29,6 +30,89 @@ export default function Home() {
   const [storeName, setStoreName] = useState('');
   const [businessType, setBusinessType] = useState('Warung Makan');
   const [onboardingStep, setOnboardingStep] = useState(1); // 1: Info Toko, 2: Produk Sukses, 3: Transaksi Pertama
+
+  // QRIS state and handlers
+  const [uploadingQris, setUploadingQris] = useState(false);
+
+  const handleQrisUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Cek format file gambar
+    if (!file.type.startsWith('image/')) {
+      alert('File harus berupa gambar (PNG, JPG, dll).');
+      return;
+    }
+
+    setUploadingQris(true);
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 400;
+            const MAX_HEIGHT = 400;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+            resolve(compressedDataUrl);
+          };
+          img.onerror = () => reject(new Error('Gagal memuat gambar. Pastikan file gambar valid.'));
+          img.src = event.target.result;
+        };
+        reader.onerror = () => reject(new Error('Gagal membaca file.'));
+        reader.readAsDataURL(file);
+      });
+
+      const res = await updateStoreSettings({ qris_code: dataUrl });
+      if (res.success) {
+        alert('QRIS Toko berhasil diperbarui!');
+      } else {
+        alert(res.error || 'Gagal memperbarui QRIS.');
+      }
+    } catch (err) {
+      alert(err.message || 'Terjadi kesalahan saat memproses gambar.');
+    } finally {
+      setUploadingQris(false);
+    }
+  };
+
+  const handleQrisDelete = async () => {
+    if (!confirm('Apakah Anda yakin ingin menghapus QRIS Toko?')) return;
+    setUploadingQris(true);
+    try {
+      const res = await updateStoreSettings({ qris_code: null });
+      if (res.success) {
+        alert('QRIS Toko berhasil dihapus.');
+      } else {
+        alert(res.error || 'Gagal menghapus QRIS.');
+      }
+    } catch (err) {
+      alert(err.message || 'Terjadi kesalahan saat menghapus QRIS.');
+    } finally {
+      setUploadingQris(false);
+    }
+  };
 
   // Handle Login / Registration
   const handleAuth = async (e) => {
@@ -437,6 +521,75 @@ export default function Home() {
               Perpanjang/Upgrade Plan
             </a>
           </div>
+        </div>
+
+        {/* QRIS Settings Card */}
+        <div className="bg-slate-900/40 border border-slate-800/80 p-6 rounded-3xl space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                </svg>
+                QRIS Pembayaran Toko
+              </h2>
+              <p className="text-sm text-slate-400">
+                Unggah QR code QRIS toko Anda agar pelanggan bisa memindai pembayaran non-tunai secara langsung di layar kasir.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <label className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-bold rounded-xl shadow-lg cursor-pointer transition-all flex items-center gap-1.5 disabled:opacity-50">
+                {uploadingQris ? (
+                  <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                )}
+                <span>{store.settings?.qris_code ? 'Ganti Gambar' : 'Unggah QRIS'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploadingQris}
+                  className="hidden"
+                  onChange={handleQrisUpload}
+                />
+              </label>
+              
+              {store.settings?.qris_code && (
+                <button
+                  onClick={handleQrisDelete}
+                  disabled={uploadingQris}
+                  className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-sm font-semibold rounded-xl transition-all"
+                >
+                  Hapus
+                </button>
+              )}
+            </div>
+          </div>
+
+          {store.settings?.qris_code ? (
+            <div className="flex items-center gap-4 bg-slate-950/40 border border-slate-800/80 p-4 rounded-2xl max-w-sm">
+              <div className="w-24 h-24 bg-white rounded-xl overflow-hidden flex items-center justify-center p-1.5 shrink-0 shadow-md">
+                <img
+                  src={store.settings.qris_code}
+                  alt="QRIS Toko"
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-slate-400 uppercase tracking-widest font-semibold">Tampilan Aktif</p>
+                <p className="text-sm font-bold text-white">QRIS Kustom Terpasang</p>
+                <p className="text-xs text-slate-500">QR Code ini otomatis muncul di layar kasir ketika memilih pembayaran QRIS.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-slate-950/20 border border-dashed border-slate-800 p-6 rounded-2xl text-center space-y-2">
+              <p className="text-sm text-slate-400">Belum ada QRIS kustom yang diunggah.</p>
+              <p className="text-xs text-slate-500">Saat transaksi QRIS, sistem kasir akan menampilkan QRIS simulasi default.</p>
+            </div>
+          )}
         </div>
 
         {/* Shortcut Menus */}

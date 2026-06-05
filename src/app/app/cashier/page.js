@@ -20,7 +20,8 @@ export default function CashierPage() {
     loginCashier,
     logoutCashier,
     checkout,
-    triggerSync
+    triggerSync,
+    updateStoreSettings
   } = useApp();
 
   // PIN screen state
@@ -47,6 +48,88 @@ export default function CashierPage() {
   const [lastTxTotal, setLastTxTotal] = useState(0);
   const [lastTxChange, setLastTxChange] = useState(0);
   const [customerPhone, setCustomerPhone] = useState('');
+
+  // QRIS state and handlers
+  const [uploadingQris, setUploadingQris] = useState(false);
+
+  const handleQrisUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('File harus berupa gambar (PNG, JPG, dll).');
+      return;
+    }
+
+    setUploadingQris(true);
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 400;
+            const MAX_HEIGHT = 400;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+            resolve(compressedDataUrl);
+          };
+          img.onerror = () => reject(new Error('Gagal memuat gambar. Pastikan file gambar valid.'));
+          img.src = event.target.result;
+        };
+        reader.onerror = () => reject(new Error('Gagal membaca file.'));
+        reader.readAsDataURL(file);
+      });
+
+      const res = await updateStoreSettings({ qris_code: dataUrl });
+      if (res.success) {
+        alert('QRIS Toko berhasil diperbarui!');
+      } else {
+        alert(res.error || 'Gagal memperbarui QRIS.');
+      }
+    } catch (err) {
+      alert(err.message || 'Terjadi kesalahan saat memproses gambar.');
+    } finally {
+      setUploadingQris(false);
+    }
+  };
+
+  const handleQrisDelete = async () => {
+    if (!confirm('Apakah Anda yakin ingin menghapus QRIS Toko?')) return;
+    setUploadingQris(true);
+    try {
+      const res = await updateStoreSettings({ qris_code: null });
+      if (res.success) {
+        alert('QRIS Toko berhasil dihapus.');
+      } else {
+        alert(res.error || 'Gagal menghapus QRIS.');
+      }
+    } catch (err) {
+      alert(err.message || 'Terjadi kesalahan saat menghapus QRIS.');
+    } finally {
+      setUploadingQris(false);
+    }
+  };
 
   // Extract unique categories from products
   useEffect(() => {
@@ -586,18 +669,68 @@ export default function CashierPage() {
             )}
 
             {paymentMethod === 'QRIS' && (
-              <div className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl space-y-2 border border-slate-200">
-                {/* Dynamic/Mock QR Code Display */}
-                <div className="w-40 h-40 bg-slate-100 flex items-center justify-center font-bold text-slate-400 border border-slate-200 relative">
-                  {/* Styled Mock QR Grid */}
-                  <div className="absolute inset-2 grid grid-cols-4 gap-1 opacity-20">
-                    {Array.from({ length: 16 }).map((_, i) => (
-                      <div key={i} className={`bg-black ${i % 3 === 0 ? 'opacity-100' : 'opacity-0'}`}></div>
-                    ))}
+              <div className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl space-y-3 border border-slate-200">
+                {/* Dynamic/Custom/Mock QR Code Display */}
+                {store.settings?.qris_code ? (
+                  <div className="w-44 h-44 bg-white border border-slate-200 rounded-xl overflow-hidden flex items-center justify-center p-2 shadow-sm">
+                    <img 
+                      src={store.settings.qris_code} 
+                      alt="QRIS Toko" 
+                      className="max-w-full max-h-full object-contain"
+                    />
                   </div>
-                  <div className="w-8 h-8 bg-emerald-500 rounded-lg absolute z-10 flex items-center justify-center text-slate-950 font-black text-xs">QR</div>
-                  <span className="text-[10px] text-slate-800 font-extrabold uppercase mt-12 z-10">MOCK QRIS PASAR</span>
-                </div>
+                ) : (
+                  <div className="w-40 h-40 bg-slate-100 flex items-center justify-center font-bold text-slate-400 border border-slate-200 relative">
+                    {/* Styled Mock QR Grid */}
+                    <div className="absolute inset-2 grid grid-cols-4 gap-1 opacity-20">
+                      {Array.from({ length: 16 }).map((_, i) => (
+                        <div key={i} className={`bg-black ${i % 3 === 0 ? 'opacity-100' : 'opacity-0'}`}></div>
+                      ))}
+                    </div>
+                    <div className="w-8 h-8 bg-emerald-500 rounded-lg absolute z-10 flex items-center justify-center text-slate-950 font-black text-xs">QR</div>
+                    <span className="text-[10px] text-slate-800 font-extrabold uppercase mt-12 z-10">MOCK QRIS PASAR</span>
+                  </div>
+                )}
+
+                {/* Upload/Change QRIS directly in cashier if cashier is the owner */}
+                {cashier?.role === 'owner' ? (
+                  <div className="text-center w-full">
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg cursor-pointer transition-colors border border-slate-300">
+                      {uploadingQris ? (
+                        <div className="w-3 h-3 border-2 border-slate-700 border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                      )}
+                      <span>{store.settings?.qris_code ? 'Ganti QRIS' : 'Unggah QRIS Toko'}</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        disabled={uploadingQris}
+                        className="hidden" 
+                        onChange={handleQrisUpload}
+                      />
+                    </label>
+                    {store.settings?.qris_code && (
+                      <button
+                        type="button"
+                        onClick={handleQrisDelete}
+                        disabled={uploadingQris}
+                        className="block mx-auto mt-1.5 text-[10px] text-rose-600 hover:underline font-semibold"
+                      >
+                        Hapus QRIS
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  !store.settings?.qris_code && (
+                    <p className="text-[10px] text-slate-400 text-center font-medium">
+                      QRIS kustom belum diunggah oleh pemilik toko.
+                    </p>
+                  )
+                )}
+                
                 <p className="text-[10px] text-slate-500 font-bold text-center">Scan QR code di atas menggunakan GoPay, OVO, Dana, atau LinkAja.</p>
               </div>
             )}

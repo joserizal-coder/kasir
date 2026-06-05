@@ -557,6 +557,45 @@ export function AppProvider({ children }) {
     }
   };
 
+  // Update Store Settings
+  const updateStoreSettings = async (newSettings) => {
+    if (!store?.id) return { success: false, error: 'No active store' };
+
+    try {
+      const isCurrentlyOnline = checkOnline();
+      const updatedStore = {
+        ...store,
+        settings: {
+          ...(store.settings || {}),
+          ...newSettings
+        },
+        updated_at: new Date().toISOString()
+      };
+
+      // 1. Save to local Dexie
+      await db.stores.put(updatedStore);
+      setStore(updatedStore);
+
+      // 2. Upload to Supabase if online
+      if (isCurrentlyOnline) {
+        const { error } = await supabase
+          .from('stores')
+          .update({
+            settings: updatedStore.settings,
+            updated_at: updatedStore.updated_at
+          })
+          .eq('id', store.id);
+
+        if (error) throw error;
+      }
+
+      return { success: true, store: updatedStore };
+    } catch (err) {
+      console.error('Failed to update store settings:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       user,
@@ -579,7 +618,8 @@ export function AppProvider({ children }) {
       saveProduct,
       checkout,
       addExpense,
-      triggerSync
+      triggerSync,
+      updateStoreSettings
     }}>
       {children}
     </AppContext.Provider>
