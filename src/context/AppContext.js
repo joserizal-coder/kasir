@@ -477,7 +477,11 @@ export function AppProvider({ children }) {
         const prod = await db.products.get(item.product.id);
         if (prod) {
           const newStock = Math.max(0, prod.stock - item.qty);
-          await db.products.update(item.product.id, { stock: newStock });
+          await db.products.update(item.product.id, { 
+            stock: newStock,
+            synced: false,
+            updated_at: new Date().toISOString()
+          });
           
           // Log stock out movement
           await db.stock_movements.put({
