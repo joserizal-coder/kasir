@@ -76,6 +76,56 @@ export default function Home() {
     }
   };
 
+  // Upgrade Modal states & helpers
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradePlan, setUpgradePlan] = useState('Usaha');
+  const [upgradeDuration, setUpgradeDuration] = useState(1); // 1, 3, 6, 12 months
+
+  const getUpgradePriceDetails = () => {
+    const prices = {
+      Usaha: 49000,
+      Berkembang: 99000,
+      Bisnis: 199000
+    };
+    
+    const basePrice = prices[upgradePlan] || 49000;
+    const totalBeforeDiscount = basePrice * upgradeDuration;
+    
+    let discountPercent = 0;
+    if (upgradeDuration === 3) discountPercent = 5;
+    else if (upgradeDuration === 6) discountPercent = 10;
+    else if (upgradeDuration === 12) discountPercent = 20;
+    
+    const discountAmount = Math.round(totalBeforeDiscount * (discountPercent / 100));
+    const totalPrice = totalBeforeDiscount - discountAmount;
+    
+    return {
+      basePrice,
+      totalBeforeDiscount,
+      discountPercent,
+      discountAmount,
+      totalPrice
+    };
+  };
+
+  const getUpgradeWhatsAppLink = () => {
+    const details = getUpgradePriceDetails();
+    const formatRp = (n) => `Rp ${n.toLocaleString('id-ID')}`;
+    
+    const text = 
+      `Halo Admin Kasir Kita,\n\n` +
+      `Saya ingin mengajukan perpanjangan/upgrade langganan toko:\n` +
+      `• *Nama Toko*: ${store?.name || ''}\n` +
+      `• *ID Toko*: ${store?.id || ''}\n` +
+      `• *Paket Pilihan*: Paket ${upgradePlan}\n` +
+      `• *Durasi*: ${upgradeDuration} Bulan\n` +
+      `• *Rincian Biaya*: ${formatRp(details.totalPrice)} ` + 
+      (details.discountPercent > 0 ? `(Sudah diskon ${details.discountPercent}%)` : '') + `\n\n` +
+      `Mohon rincian rekening untuk pembayaran. Terima kasih!`;
+      
+    return `https://wa.me/6285163612553?text=${encodeURIComponent(text)}`;
+  };
+
   const handleQrisUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -554,14 +604,12 @@ export default function Home() {
                 Ke Panel Admin
               </Link>
             )}
-            <a
-              href={`https://wa.me/6285163612553?text=Halo%20Admin%20Kasir%20Kita,%20saya%20ingin%20upgrade%20langganan%20toko%20${encodeURIComponent(store.name)}`}
-              target="_blank"
-              rel="noreferrer"
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-bold rounded-xl shadow-lg transition-all"
+            <button
+              onClick={() => setShowUpgradeModal(true)}
+              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-bold rounded-xl shadow-lg transition-all tap-effect"
             >
               Perpanjang/Upgrade Plan
-            </a>
+            </button>
           </div>
         </div>
 
@@ -752,6 +800,155 @@ export default function Home() {
           </Link>
         </div>
       </main>
+
+      {/* UPGRADE PLAN MODAL */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6 animate-zoom-in max-h-[95vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-extrabold text-xl text-white">Upgrade / Perpanjang Plan</h3>
+                <p className="text-xs text-slate-400">Pilih paket terbaik untuk tingkatkan operasional toko Anda</p>
+              </div>
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Plan Selector Grid */}
+            <div className="space-y-3">
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Pilih Paket
+              </label>
+              <div className="grid grid-cols-1 gap-3">
+                {[
+                  {
+                    id: 'Usaha',
+                    name: 'Paket Usaha',
+                    price: 'Rp 49.000',
+                    period: '/bulan',
+                    desc: 'Transaksi tanpa batas, QRIS kustom, laporan pajak, & pencatatan struk thermal.',
+                    color: 'border-violet-600/30 text-violet-400 bg-violet-600/5 hover:bg-violet-600/10'
+                  },
+                  {
+                    id: 'Berkembang',
+                    name: 'Paket Berkembang',
+                    price: 'Rp 99.000',
+                    period: '/bulan',
+                    desc: 'Semua fitur Usaha + dukung hingga 5 akun kasir karyawan & kelola multi-otoritas.',
+                    color: 'border-emerald-600/30 text-emerald-400 bg-emerald-600/5 hover:bg-emerald-600/10'
+                  },
+                  {
+                    id: 'Bisnis',
+                    name: 'Paket Bisnis',
+                    price: 'Rp 199.000',
+                    period: '/bulan',
+                    desc: 'Semua fitur Berkembang + manajemen multi-toko (cabang), & inventaris stok lanjutan.',
+                    color: 'border-amber-600/30 text-amber-400 bg-amber-600/5 hover:bg-amber-600/10'
+                  }
+                ].map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setUpgradePlan(p.id)}
+                    className={`text-left p-4 rounded-2xl border transition-all flex flex-col sm:flex-row justify-between gap-3 ${
+                      upgradePlan === p.id
+                        ? 'border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/5'
+                        : 'border-slate-800 bg-slate-950/40 hover:bg-slate-900/60'
+                    }`}
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${upgradePlan === p.id ? 'bg-emerald-400' : 'bg-slate-700'}`}></span>
+                        <h4 className="font-extrabold text-sm text-slate-100">{p.name}</h4>
+                      </div>
+                      <p className="text-xs text-slate-400 leading-relaxed max-w-sm">{p.desc}</p>
+                    </div>
+                    <div className="sm:text-right shrink-0">
+                      <p className="font-black text-sm text-emerald-400">{p.price}</p>
+                      <p className="text-[10px] text-slate-500">{p.period}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Duration Selector */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Pilih Durasi Langganan
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { value: 1, label: '1 Bln', disc: 'Normal' },
+                  { value: 3, label: '3 Bln', disc: 'Disc 5%' },
+                  { value: 6, label: '6 Bln', disc: 'Disc 10%' },
+                  { value: 12, label: '12 Bln', disc: 'Disc 20%' }
+                ].map((d) => (
+                  <button
+                    key={d.value}
+                    type="button"
+                    onClick={() => setUpgradeDuration(d.value)}
+                    className={`py-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
+                      upgradeDuration === d.value
+                        ? 'bg-emerald-500 text-slate-950 border-emerald-500 font-extrabold shadow-lg shadow-emerald-500/10'
+                        : 'bg-slate-950/60 text-slate-300 border-slate-800 hover:bg-slate-900'
+                    }`}
+                  >
+                    <span className="text-xs">{d.label}</span>
+                    <span className={`text-[8px] uppercase tracking-wider ${upgradeDuration === d.value ? 'text-slate-950/70' : 'text-slate-500'}`}>{d.disc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Cost Summary Box */}
+            <div className="bg-slate-950/60 border border-slate-800/80 p-5 rounded-2xl space-y-2.5 text-sm">
+              <div className="flex justify-between text-slate-400">
+                <span>Harga Normal ({upgradeDuration} bulan)</span>
+                <span>Rp {getUpgradePriceDetails().totalBeforeDiscount.toLocaleString('id-ID')}</span>
+              </div>
+              {getUpgradePriceDetails().discountAmount > 0 && (
+                <div className="flex justify-between text-rose-400">
+                  <span>Diskon Paket ({getUpgradePriceDetails().discountPercent}%)</span>
+                  <span>-Rp {getUpgradePriceDetails().discountAmount.toLocaleString('id-ID')}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-md font-extrabold text-emerald-400 pt-2 border-t border-slate-900">
+                <span>Total Pembayaran</span>
+                <span>Rp {getUpgradePriceDetails().totalPrice.toLocaleString('id-ID')}</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowUpgradeModal(false)}
+                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-3.5 font-bold rounded-xl text-sm transition-colors"
+              >
+                Kembali
+              </button>
+              <a
+                href={getUpgradeWhatsAppLink()}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setShowUpgradeModal(false)}
+                className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-3.5 font-bold rounded-xl text-sm flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/10 transition-colors tap-effect"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12.012 2c-5.506 0-9.988 4.482-9.988 9.988 0 1.76.46 3.414 1.258 4.861L2.03 22l5.31-.1.01.01a9.96 9.96 0 004.662 1.15c5.506 0 9.988-4.482 9.988-9.988C22 6.482 17.518 2 12.012 2zm6.262 14.188c-.27.76-1.36 1.39-1.89 1.44-.48.05-1.1.22-3.23-.62a12.87 12.87 0 01-5.63-4.94c-.95-1.27-1.52-2.74-1.52-4.26 0-1.61.84-2.4 1.14-2.7.25-.26.54-.33.72-.33h.52c.16 0 .38-.02.58.46.22.52.74 1.8.8 1.93.07.13.11.28.02.46-.08.18-.13.3-.27.46-.14.16-.3.35-.42.47-.13.14-.27.29-.12.55a8.77 8.77 0 001.6 2c.74.66 1.37 1.08 1.91 1.34.25.12.5.1.69-.11.23-.26.97-1.12 1.22-1.5.1-.15.2-.12.35-.06l2.25 1.06c.15.07.25.1.29.17.04.07.04.42-.08.76z"/>
+                </svg>
+                Hubungi via WA
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
