@@ -138,11 +138,18 @@ body {
     print-color-adjust: exact !important;
   }
 
-  body {
+  /* Reset default backgrounds and colors of all layout blocks to print-friendly white */
+  body,
+  .min-h-screen,
+  .bg-slate-950,
+  .bg-slate-900,
+  .bg-slate-900\/60,
+  .bg-slate-950\/60,
+  .bg-slate-900\/40,
+  .bg-slate-950\/20 {
     background-color: #ffffff !important;
+    background: #ffffff !important;
     color: #0f172a !important;
-    font-family: 'Outfit', sans-serif;
-    min-height: unset;
   }
 
   /* Sembunyikan semua elemen UI yang tidak diperlukan saat cetak */
@@ -150,24 +157,40 @@ body {
     display: none !important;
   }
 
-  /* Reset card color — gunakan border tipis, bg putih */
+  /* Reset card color — gunakan border tipis abu-abu, background abu-abu sangat muda */
   .print-card {
     background-color: #f8fafc !important;
-    border: 1px solid #cbd5e1 !important;
+    border: 1px solid #e2e8f0 !important;
     color: #0f172a !important;
     border-radius: 12px;
     padding: 16px;
+    box-shadow: none !important;
   }
 
-  /* Teks */
-  .text-slate-100, .text-slate-200, .text-slate-300,
-  .text-white, .text-emerald-400, .text-violet-400,
-  .text-rose-400, .text-amber-400 {
+  /* Override text colors to dark neutral by default */
+  .text-slate-100, .text-slate-200, .text-slate-300, .text-white {
     color: #0f172a !important;
   }
 
   .text-slate-400, .text-slate-500 {
     color: #475569 !important;
+  }
+
+  /* Accent status colors — use darker, high-contrast print-friendly shades */
+  .text-emerald-400 {
+    color: #15803d !important; /* Dark Green */
+  }
+
+  .text-rose-400 {
+    color: #b91c1c !important; /* Dark Red */
+  }
+
+  .text-violet-400 {
+    color: #6d28d9 !important; /* Dark Violet */
+  }
+
+  .text-amber-400 {
+    color: #b45309 !important; /* Dark Amber */
   }
 
   /* Tabel */
@@ -176,7 +199,7 @@ body {
     width: 100%;
   }
   th, td {
-    border: 1px solid #e2e8f0 !important;
+    border: 1px solid #cbd5e1 !important;
     padding: 8px 12px !important;
     color: #0f172a !important;
     background-color: #ffffff !important;
@@ -185,10 +208,12 @@ body {
     background-color: #f1f5f9 !important;
   }
 
-  /* Gradient brand — override ke putih saat cetak */
+  /* Gradient brand — override ke light gray saat cetak */
   .bg-gradient-brand {
     background: #f1f5f9 !important;
     color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
   }
 
   /* Pastikan tidak ada page break di tengah section */
@@ -203,6 +228,11 @@ body {
     padding-bottom: 16px;
     border-bottom: 2px solid #0f172a;
     margin-bottom: 20px;
+    color: #0f172a !important;
+  }
+
+  .print-header p {
+    color: #0f172a !important;
   }
 
   footer {
