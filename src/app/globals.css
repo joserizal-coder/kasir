@@ -211,7 +211,7 @@ body {
 }
 
 /* Styling Cetak Invoice Khusus */
-.invoice-printable {
+#print-root {
   display: none;
 }
 
@@ -220,13 +220,12 @@ body {
     background: white !important;
     color: black !important;
   }
-  body.print-invoice-mode .print-hide,
-  body.print-invoice-mode header,
-  body.print-invoice-mode main,
-  body.print-invoice-mode footer,
-  body.print-invoice-mode .print-header,
-  body.print-invoice-mode .fixed.inset-0 {
+  body.print-invoice-mode .main-app-content,
+  body.print-invoice-mode footer {
     display: none !important;
+  }
+  body.print-invoice-mode #print-root {
+    display: block !important;
   }
   body.print-invoice-mode .invoice-printable {
     display: block !important;

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '../lib/db';
 
 export default function InvoiceModal({ transactionId, onClose }) {
@@ -9,6 +10,11 @@ export default function InvoiceModal({ transactionId, onClose }) {
   const [store, setStore] = useState(null);
   const [cashier, setCashier] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     async function loadInvoiceData() {
@@ -111,63 +117,80 @@ export default function InvoiceModal({ transactionId, onClose }) {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  return (
-    <>
-      {/* Printable Invoice Block (Hidden in screen, shown only when print-invoice-mode is active in body) */}
-      <div className="invoice-printable">
-        <div style={{ fontFamily: 'monospace', fontSize: '12px', color: '#000', padding: '10px', width: '280px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-            <h3 style={{ margin: '0 0 2px 0', fontSize: '14px', fontWeight: 'bold' }}>{store?.name}</h3>
-            <p style={{ margin: '0', fontSize: '10px', color: '#666' }}>{store?.business_type}</p>
-            {store?.address && <p style={{ margin: '2px 0 0 0', fontSize: '9px', color: '#666' }}>{store.address}</p>}
-          </div>
+  const printableContent = (
+    <div className="invoice-printable">
+      <div style={{ fontFamily: 'monospace', fontSize: '12px', color: '#000', padding: '10px', width: '280px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+          <h3 style={{ margin: '0 0 2px 0', fontSize: '14px', fontWeight: 'bold' }}>{store?.name}</h3>
+          <p style={{ margin: '0', fontSize: '10px', color: '#666' }}>{store?.business_type}</p>
+          {store?.address && <p style={{ margin: '2px 0 0 0', fontSize: '9px', color: '#666' }}>{store.address}</p>}
+        </div>
 
-          <div style={{ borderBottom: '1px dashed #000', marginBottom: '8px', paddingBottom: '8px' }}>
-            <p style={{ margin: '0' }}>No: {invoiceNo}</p>
-            <p style={{ margin: '0' }}>Tgl: {new Date(transaction.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}</p>
-            <p style={{ margin: '0' }}>Kasir: {cashier?.name || 'Pemilik Toko'}</p>
-          </div>
+        <div style={{ borderBottom: '1px dashed #000', marginBottom: '8px', paddingBottom: '8px' }}>
+          <p style={{ margin: '0' }}>No: {invoiceNo}</p>
+          <p style={{ margin: '0' }}>Tgl: {new Date(transaction.created_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}</p>
+          <p style={{ margin: '0' }}>Kasir: {cashier?.name || 'Pemilik Toko'}</p>
+        </div>
 
-          <div style={{ borderBottom: '1px dashed #000', marginBottom: '8px', paddingBottom: '8px' }}>
-            {items.map((item, idx) => (
-              <div key={idx} style={{ marginBottom: '6px' }}>
-                <p style={{ margin: '0', fontWeight: 'bold' }}>{item.productName}</p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-                  <span>{item.qty} {item.unit} x Rp {item.price_at_sale.toLocaleString('id-ID')}</span>
-                  <span>Rp {((item.price_at_sale - item.discount) * item.qty).toLocaleString('id-ID')}</span>
-                </div>
-                {item.discount > 0 && (
-                  <p style={{ margin: '0', fontSize: '10px', color: '#555', fontStyle: 'italic' }}>
-                    * Diskon: -Rp {(item.discount * item.qty).toLocaleString('id-ID')}
-                  </p>
-                )}
+        <div style={{ borderBottom: '1px dashed #000', marginBottom: '8px', paddingBottom: '8px' }}>
+          {items.map((item, idx) => (
+            <div key={idx} style={{ marginBottom: '6px' }}>
+              <p style={{ margin: '0', fontWeight: 'bold' }}>{item.productName}</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                <span>{item.qty} {item.unit} x Rp {item.price_at_sale.toLocaleString('id-ID')}</span>
+                <span>Rp {((item.price_at_sale - item.discount) * item.qty).toLocaleString('id-ID')}</span>
               </div>
-            ))}
-          </div>
+              {item.discount > 0 && (
+                <p style={{ margin: '0', fontSize: '10px', color: '#555', fontStyle: 'italic' }}>
+                  * Diskon: -Rp {(item.discount * item.qty).toLocaleString('id-ID')}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
 
-          <div style={{ borderBottom: '1px dashed #000', marginBottom: '8px', paddingBottom: '8px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+        <div style={{ borderBottom: '1px dashed #000', marginBottom: '8px', paddingBottom: '8px', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Subtotal:</span>
+            <span>Rp {subtotal.toLocaleString('id-ID')}</span>
+          </div>
+          {totalDiscount > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Subtotal:</span>
-              <span>Rp {subtotal.toLocaleString('id-ID')}</span>
+              <span>Total Diskon:</span>
+              <span>-Rp {totalDiscount.toLocaleString('id-ID')}</span>
             </div>
-            {totalDiscount > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Total Diskon:</span>
-                <span>-Rp {totalDiscount.toLocaleString('id-ID')}</span>
-              </div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', borderTop: '1px dashed #ccc', paddingTop: '3px' }}>
-              <span>GRAND TOTAL:</span>
-              <span>Rp {transaction.total.toLocaleString('id-ID')}</span>
-            </div>
-          </div>
-
-          <div style={{ fontSize: '11px', lineHeight: '1.4' }}>
-            <p style={{ margin: '0' }}>Metode Bayar: <strong>{transaction.payment_method}</strong></p>
-            <p style={{ margin: '0', textAlign: 'center', marginTop: '15px', fontStyle: 'italic' }}>Terima kasih atas kunjungan Anda!</p>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', borderTop: '1px dashed #ccc', paddingTop: '3px' }}>
+            <span>GRAND TOTAL:</span>
+            <span>Rp {transaction.total.toLocaleString('id-ID')}</span>
           </div>
         </div>
+
+        {/* Print custom QRIS image if exist and transaction method is not Cash/Tunai */}
+        {transaction.payment_method !== 'Tunai' && store?.settings?.qris_code && (
+          <div style={{ textAlign: 'center', marginTop: '12px', marginBottom: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <p style={{ margin: '0 0 5px 0', fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Scan QRIS untuk Bayar</p>
+            <img 
+              src={store.settings.qris_code} 
+              alt="QRIS" 
+              style={{ width: '130px', height: '130px', objectFit: 'contain', border: '1px solid #ddd', padding: '3px', backgroundColor: '#fff' }} 
+            />
+          </div>
+        )}
+
+        <div style={{ fontSize: '11px', lineHeight: '1.4' }}>
+          <p style={{ margin: '0' }}>Metode Bayar: <strong>{transaction.payment_method}</strong></p>
+          <p style={{ margin: '0', textAlign: 'center', marginTop: '15px', fontStyle: 'italic' }}>Terima kasih atas kunjungan Anda!</p>
+        </div>
       </div>
+    </div>
+  );
+
+  return (
+    <>
+      {mounted && typeof document !== 'undefined' && document.getElementById('print-root')
+        ? createPortal(printableContent, document.getElementById('print-root'))
+        : null}
 
       {/* Screen Preview Modal */}
       <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-6 print-hide">
