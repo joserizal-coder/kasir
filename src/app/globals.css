@@ -127,3 +127,86 @@ body {
 .pulse-glow {
   animation: pulseGlow 3s infinite ease-in-out;
 }
+
+/* ================================================================
+   PRINT / PDF STYLES
+   Digunakan saat window.print() dipanggil pada halaman laporan
+   ================================================================ */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    font-family: 'Outfit', sans-serif;
+    min-height: unset;
+  }
+
+  /* Sembunyikan semua elemen UI yang tidak diperlukan saat cetak */
+  .print-hide {
+    display: none !important;
+  }
+
+  /* Reset card color — gunakan border tipis, bg putih */
+  .print-card {
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  /* Teks */
+  .text-slate-100, .text-slate-200, .text-slate-300,
+  .text-white, .text-emerald-400, .text-violet-400,
+  .text-rose-400, .text-amber-400 {
+    color: #0f172a !important;
+  }
+
+  .text-slate-400, .text-slate-500 {
+    color: #475569 !important;
+  }
+
+  /* Tabel */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th, td {
+    border: 1px solid #e2e8f0 !important;
+    padding: 8px 12px !important;
+    color: #0f172a !important;
+    background-color: #ffffff !important;
+  }
+  thead tr {
+    background-color: #f1f5f9 !important;
+  }
+
+  /* Gradient brand — override ke putih saat cetak */
+  .bg-gradient-brand {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+  }
+
+  /* Pastikan tidak ada page break di tengah section */
+  section {
+    page-break-inside: avoid;
+  }
+
+  /* Header laporan yang muncul di atas cetakan */
+  .print-header {
+    display: block !important;
+    text-align: center;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #0f172a;
+    margin-bottom: 20px;
+  }
+
+  footer {
+    display: none !important;
+  }
+}
+
