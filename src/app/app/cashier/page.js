@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { db } from '../../../lib/db';
 import Link from 'next/link';
+import InvoiceModal from '../../../components/InvoiceModal';
 
 export default function CashierPage() {
   const {
@@ -48,6 +49,10 @@ export default function CashierPage() {
   const [lastTxTotal, setLastTxTotal] = useState(0);
   const [lastTxChange, setLastTxChange] = useState(0);
   const [customerPhone, setCustomerPhone] = useState('');
+
+  // Invoice Modal states
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [invoiceTxId, setInvoiceTxId] = useState('');
 
   // QRIS state and handlers
   const [uploadingQris, setUploadingQris] = useState(false);
@@ -829,7 +834,21 @@ export default function CashierPage() {
               </div>
             </div>
 
-            <div className="flex gap-3 pt-4">
+            {/* Invoice Button */}
+            <button
+              onClick={() => {
+                setInvoiceTxId(lastTxId);
+                setShowInvoiceModal(true);
+              }}
+              className="w-full bg-violet-600/10 hover:bg-violet-600/20 border border-violet-600/20 text-violet-400 py-3 font-bold rounded-xl text-sm flex items-center justify-center gap-2 transition-colors tap-effect"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Lihat & Cetak Invoice
+            </button>
+
+            <div className="flex gap-3">
               <button
                 onClick={() => {
                   setShowSuccessModal(false);
@@ -851,6 +870,14 @@ export default function CashierPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* INVOICE MODAL */}
+      {showInvoiceModal && (
+        <InvoiceModal
+          transactionId={invoiceTxId}
+          onClose={() => setShowInvoiceModal(false)}
+        />
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { db } from '../../../lib/db';
 import Link from 'next/link';
+import InvoiceModal from '../../../components/InvoiceModal';
 
 // Format tanggal lokal ke format YYYY-MM-DD (untuk nilai input[type=date])
 function toInputDate(date) {
@@ -34,6 +35,10 @@ export default function ReportsPage() {
 
   const [totalExpensesRange, setTotalExpensesRange] = useState(0);
   const [transactionsList,   setTransactionsList]   = useState([]);
+
+  // ── Invoice Modal ──────────────────────────────────────────────────────────
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [invoiceTxId,      setInvoiceTxId]      = useState('');
 
   // ── Pengeluaran Modal ───────────────────────────────────────────────────────
   const [showExpenseModal,  setShowExpenseModal]  = useState(false);
@@ -388,34 +393,37 @@ export default function ReportsPage() {
               Arus Kas — {rangeLabel}
             </h2>
             <span className="text-[10px] text-slate-500">Maks. 50 transaksi terakhir</span>
-          </div>
-          <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl overflow-hidden shadow-2xl print-card">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px] tracking-wider bg-slate-900/60">
-                    <th className="px-6 py-4">Waktu</th>
-                    <th className="px-6 py-4">Kategori Aksi</th>
-                    <th className="px-6 py-4">Detail</th>
-                    <th className="px-6 py-4 text-right">Masuk (+)</th>
-                    <th className="px-6 py-4 text-right">Keluar (-)</th>
+          <span className="text-[10px] text-slate-500">Maks. 50 transaksi terakhir</span>
+        </div>
+        <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl overflow-hidden shadow-2xl print-card">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px] tracking-wider bg-slate-900/60">
+                  <th className="px-6 py-4">Waktu</th>
+                  <th className="px-6 py-4">Kategori Aksi</th>
+                  <th className="px-6 py-4">Detail</th>
+                  <th className="px-6 py-4 text-right">Masuk (+)</th>
+                  <th className="px-6 py-4 text-right">Keluar (-)</th>
+                  <th className="px-6 py-4 text-center print-hide">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {transactionsList.length === 0 && expenses.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-12 text-center text-slate-500">
+                      Tidak ada aktivitas kas pada rentang tanggal ini.
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {transactionsList.length === 0 && expenses.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
-                        Tidak ada aktivitas kas pada rentang tanggal ini.
-                      </td>
-                    </tr>
-                  ) : (
+                ) : (
                     [
                       ...transactionsList.map(t => ({
                         date: t.created_at,
                         type: 'Transaksi Penjualan',
                         detail: `Nota #${t.id.slice(0, 8).toUpperCase()} (${t.payment_method})`,
                         in: t.total,
-                        out: 0
+                        out: 0,
+                        txId: t.id
                       })),
                       ...expenses
                         .filter(e => e.date >= startDate && e.date <= endDate)
@@ -424,7 +432,8 @@ export default function ReportsPage() {
                           type: `Pengeluaran (${e.category})`,
                           detail: e.description || 'Pengeluaran operasional',
                           in: 0,
-                          out: e.amount
+                          out: e.amount,
+                          txId: null
                         }))
                     ]
                       .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -441,6 +450,22 @@ export default function ReportsPage() {
                           </td>
                           <td className="px-6 py-4 text-right text-rose-400 font-bold">
                             {row.out > 0 ? `-Rp ${row.out.toLocaleString('id-ID')}` : '-'}
+                          </td>
+                          <td className="px-6 py-4 text-center print-hide">
+                            {row.txId ? (
+                              <button
+                                onClick={() => { setInvoiceTxId(row.txId); setShowInvoiceModal(true); }}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-violet-600/10 hover:bg-violet-600/20 border border-violet-600/20 text-violet-400 rounded-lg text-[10px] font-bold transition-colors"
+                                title="Lihat Invoice"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Invoice
+                              </button>
+                            ) : (
+                              <span className="text-slate-700 text-[10px]">—</span>
+                            )}
                           </td>
                         </tr>
                       ))
@@ -529,6 +554,14 @@ export default function ReportsPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* INVOICE MODAL */}
+      {showInvoiceModal && (
+        <InvoiceModal
+          transactionId={invoiceTxId}
+          onClose={() => setShowInvoiceModal(false)}
+        />
       )}
     </div>
   );
