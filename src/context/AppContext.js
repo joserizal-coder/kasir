@@ -420,6 +420,30 @@ export function AppProvider({ children }) {
     if (!store?.id) return { success: false, error: 'No active store' };
     if (cart.length === 0) return { success: false, error: 'Keranjang belanja kosong' };
 
+    // Validasi batas transaksi bulanan untuk paket Gratis
+    if (store.plan === 'Gratis') {
+      try {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        
+        const count = await db.transactions
+          .where('store_id').equals(store.id)
+          .and(tx => tx.created_at >= startOfMonth)
+          .count();
+          
+        const limit = store.settings?.max_monthly_transactions ?? 50;
+        
+        if (count >= limit) {
+          return {
+            success: false,
+            error: `Batas transaksi bulanan (${limit} transaksi) untuk paket Gratis telah tercapai. Silakan hubungi admin untuk menambah kuota atau upgrade plan.`
+          };
+        }
+      } catch (err) {
+        console.error('Gagal memeriksa batasan transaksi bulanan:', err);
+      }
+    }
+
     try {
       const total = cart.reduce((sum, item) => sum + ((item.product.price - item.discount) * item.qty), 0);
       const transactionId = crypto.randomUUID();

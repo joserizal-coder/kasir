@@ -77,33 +77,48 @@ export async function POST(request) {
 
     if (fetchError) throw fetchError;
 
-    let newStart = store.subscription_start ? new Date(store.subscription_start) : new Date();
-    let newEnd;
+    let updateData = {};
+    if (action === 'update_limit') {
+      const currentSettings = store.settings || {};
+      const newSettings = {
+        ...currentSettings,
+        max_monthly_transactions: parseInt(body.maxTransactions) || 50
+      };
+      updateData = {
+        settings: newSettings,
+        updated_at: new Date().toISOString()
+      };
+    } else {
+      let newStart = store.subscription_start ? new Date(store.subscription_start) : new Date();
+      let newEnd;
 
-    if (action === 'activate') {
-      newStart = new Date();
-      newEnd = new Date();
-      newEnd.setMonth(newEnd.getMonth() + parseInt(months));
-    } else if (action === 'renew') {
-      // Extend based on current end date if it is in the future, otherwise from today
-      const currentEnd = store.subscription_end ? new Date(store.subscription_end) : new Date();
-      const baseDate = currentEnd > new Date() ? currentEnd : new Date();
-      newEnd = new Date(baseDate);
-      newEnd.setMonth(newEnd.getMonth() + parseInt(months));
-    } else if (action === 'change_plan') {
-      // Just change plan, keep end date
-      newEnd = store.subscription_end ? new Date(store.subscription_end) : null;
+      if (action === 'activate') {
+        newStart = new Date();
+        newEnd = new Date();
+        newEnd.setMonth(newEnd.getMonth() + parseInt(months));
+      } else if (action === 'renew') {
+        // Extend based on current end date if it is in the future, otherwise from today
+        const currentEnd = store.subscription_end ? new Date(store.subscription_end) : new Date();
+        const baseDate = currentEnd > new Date() ? currentEnd : new Date();
+        newEnd = new Date(baseDate);
+        newEnd.setMonth(newEnd.getMonth() + parseInt(months));
+      } else if (action === 'change_plan') {
+        // Just change plan, keep end date
+        newEnd = store.subscription_end ? new Date(store.subscription_end) : null;
+      }
+
+      updateData = {
+        plan: plan || store.plan,
+        subscription_start: newStart.toISOString(),
+        subscription_end: newEnd ? newEnd.toISOString() : null,
+        updated_at: new Date().toISOString()
+      };
     }
 
     // Update store info
     const { error: updateError } = await supabaseAdmin
       .from('stores')
-      .update({
-        plan: plan || store.plan,
-        subscription_start: newStart.toISOString(),
-        subscription_end: newEnd ? newEnd.toISOString() : null,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', storeId);
 
     if (updateError) throw updateError;

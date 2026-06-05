@@ -27,6 +27,13 @@ export default function AdminPage() {
   const [notes, setNotes] = useState('');
   const [submitLoading, setSubmitLoading] = useState(false);
   const [ownerPhone, setOwnerPhone] = useState('');
+  const [maxTransactions, setMaxTransactions] = useState(50);
+
+  useEffect(() => {
+    if (selectedStore) {
+      setMaxTransactions(selectedStore.settings?.max_monthly_transactions ?? 50);
+    }
+  }, [selectedStore]);
 
   useEffect(() => {
     // Only fetch if user is verified admin
@@ -83,6 +90,7 @@ export default function AdminPage() {
           action: actionType,
           plan: actionType === 'renew' ? selectedStore.plan : selectedPlan,
           months: actionType === 'change_plan' ? null : months,
+          maxTransactions: actionType === 'update_limit' ? maxTransactions : null,
           notes,
           adminId: user?.id
         })
@@ -456,6 +464,9 @@ export default function AdminPage() {
                                   <span className={`px-2 py-1 rounded text-xs font-semibold bg-slate-950 text-slate-300 border border-slate-800`}>
                                     {st.plan}
                                   </span>
+                                  {st.plan === 'Gratis' && (
+                                    <div className="text-[10px] text-slate-500 mt-1">Batas: {st.settings?.max_monthly_transactions ?? 50} tx/bln</div>
+                                  )}
                                 </td>
                                 <td className="px-6 py-4">
                                   <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${status.color}`}>
@@ -501,11 +512,12 @@ export default function AdminPage() {
                       <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
                         Jenis Tindakan Billing
                       </label>
-                      <div className="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800/80">
+                      <div className={`grid ${selectedStore.plan === 'Gratis' ? 'grid-cols-4' : 'grid-cols-3'} gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800/80`}>
                         {[
                           { type: 'renew', text: 'Perpanjang' },
                           { type: 'activate', text: 'Aktifkan' },
-                          { type: 'change_plan', text: 'Ubah Plan' }
+                          { type: 'change_plan', text: 'Ubah Plan' },
+                          ...(selectedStore.plan === 'Gratis' ? [{ type: 'update_limit', text: 'Batas Tx' }] : [])
                         ].map((opt) => (
                           <button
                             key={opt.type}
@@ -523,8 +535,8 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    {/* If type is NOT renew, let them select plan */}
-                    {actionType !== 'renew' && (
+                    {/* If type is NOT renew and NOT update_limit, let them select plan */}
+                    {actionType !== 'renew' && actionType !== 'update_limit' && (
                       <div>
                         <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                           Pilih Paket Plan
@@ -542,8 +554,8 @@ export default function AdminPage() {
                       </div>
                     )}
 
-                    {/* If type is NOT change_plan, let them select period */}
-                    {actionType !== 'change_plan' && (
+                    {/* If type is NOT change_plan and NOT update_limit, let them select period */}
+                    {actionType !== 'change_plan' && actionType !== 'update_limit' && (
                       <div>
                         <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                           Durasi Langganan
@@ -558,6 +570,40 @@ export default function AdminPage() {
                           <option value="6">6 Bulan</option>
                           <option value="12">12 Bulan (1 Tahun)</option>
                         </select>
+                      </div>
+                    )}
+
+                    {/* If type is update_limit, render increment/decrement limit inputs */}
+                    {actionType === 'update_limit' && (
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                          Batas Transaksi per Bulan
+                        </label>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setMaxTransactions(prev => Math.max(0, prev - 10))}
+                            className="bg-slate-950 border border-slate-800 hover:bg-slate-800 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 transition-colors"
+                          >
+                            -10
+                          </button>
+                          <input
+                            type="number"
+                            required
+                            min="0"
+                            className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-center text-slate-100 font-extrabold text-md focus:outline-none focus:border-violet-500"
+                            value={maxTransactions}
+                            onChange={(e) => setMaxTransactions(Math.max(0, parseInt(e.target.value) || 0))}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setMaxTransactions(prev => prev + 10)}
+                            className="bg-slate-950 border border-slate-800 hover:bg-slate-800 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-300 transition-colors"
+                          >
+                            +10
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-slate-500 mt-1.5">Batas transaksi bulanan default untuk plan Gratis adalah 50 transaksi.</p>
                       </div>
                     )}
 
