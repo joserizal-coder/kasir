@@ -14,9 +14,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="id">
-      <body>
+      <body className="flex flex-col min-h-screen">
         <AppProvider>
-          {children}
+          <div className="flex-1 flex flex-col">
+            {children}
+          </div>
+          <footer className="py-6 text-center text-xs text-slate-500 bg-slate-950 border-t border-slate-900 z-10 shrink-0">
+            By Ratakiri | 2026
+          </footer>
         </AppProvider>
       </body>
     </html>
