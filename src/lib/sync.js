@@ -173,6 +173,43 @@ export async function syncExpensesUp(storeId) {
   }
 }
 
+// Push unsynced customers to Supabase (pelanggan baru / perubahan hutang yang dilakukan saat offline)
+export async function syncCustomersUp(storeId) {
+  if (!isOnline()) return { success: false, error: 'Offline' };
+
+  try {
+    const unsyncedCustomers = await db.customers
+      .where('store_id').equals(storeId)
+      .and(c => c.synced === false)
+      .toArray();
+
+    if (unsyncedCustomers.length === 0) return { success: true };
+
+    console.log(`Syncing ${unsyncedCustomers.length} customers up...`);
+
+    const toUpload = unsyncedCustomers.map(c => {
+      const copy = { ...c };
+      delete copy.synced;
+      return copy;
+    });
+
+    const { error } = await supabase
+      .from('customers')
+      .upsert(toUpload);
+
+    if (error) throw error;
+
+    for (const c of unsyncedCustomers) {
+      await db.customers.update(c.id, { synced: true });
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error syncing customers up:', error);
+    return { success: false, error };
+  }
+}
+
 // Pull latest products, customers, and active cashiers from Supabase to IndexedDB
 export async function syncDown(storeId) {
   if (!isOnline()) return { success: false, error: 'Offline' };
@@ -212,8 +249,10 @@ export async function syncDown(storeId) {
 
     if (customersError) throw customersError;
     if (customersData) {
+      // Tandai semua customer dari server sebagai sudah synced
+      const withSynced = customersData.map(c => ({ ...c, synced: true }));
       await db.customers.where('store_id').equals(storeId).delete();
-      await db.customers.bulkPut(customersData);
+      await db.customers.bulkPut(withSynced);
     }
 
     // 4. Sync Cashiers
@@ -270,19 +309,22 @@ export async function syncAll(storeId) {
   const movUp  = await syncStockMovementsUp(storeId);
   const prodUp = await syncProductsUp(storeId);
   const expUp  = await syncExpensesUp(storeId);
+  const custUp = await syncCustomersUp(storeId);
 
   // Download data terbaru dari server
   const down = await syncDown(storeId);
 
   return {
-    success: txUp.success && movUp.success && prodUp.success && expUp.success && down.success,
+    success: txUp.success && movUp.success && prodUp.success && expUp.success && custUp.success && down.success,
     txUp,
     movUp,
     prodUp,
     expUp,
+    custUp,
     down
   };
 }
+
 
 // Background sync manager
 let syncIntervalId = null;

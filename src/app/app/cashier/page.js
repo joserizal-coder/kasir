@@ -24,7 +24,8 @@ export default function CashierPage() {
     logoutCashier,
     checkout,
     triggerSync,
-    updateStoreSettings
+    updateStoreSettings,
+    saveCustomer
   } = useApp();
 
   // PIN screen state
@@ -44,6 +45,12 @@ export default function CashierPage() {
   const [amountReceived, setAmountReceived] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  // New Customer inline form states
+  const [showAddCustomerInline, setShowAddCustomerInline] = useState(false);
+  const [newCustName, setNewCustName] = useState('');
+  const [newCustPhone, setNewCustPhone] = useState('');
+  const [addCustLoading, setAddCustLoading] = useState(false);
   
   // Success Modal states
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -275,6 +282,32 @@ export default function CashierPage() {
     setAmountReceived(amt.toString());
   };
 
+  const handleAddCustomerSubmit = async (e) => {
+    e.preventDefault();
+    if (!newCustName.trim()) return;
+    setAddCustLoading(true);
+    try {
+      const res = await saveCustomer({
+        name: newCustName.trim(),
+        phone: newCustPhone.trim(),
+        total_debt: 0
+      });
+      if (res.success) {
+        toast.success('Pelanggan Ditambahkan', `Pelanggan ${res.customer.name} berhasil disimpan.`);
+        setSelectedCustomer(res.customer.id);
+        setShowAddCustomerInline(false);
+        setNewCustName('');
+        setNewCustPhone('');
+      } else {
+        toast.error('Gagal Menambahkan', res.error || 'Terjadi kesalahan');
+      }
+    } catch (err) {
+      toast.error('Terjadi Kesalahan', err.message);
+    } finally {
+      setAddCustLoading(false);
+    }
+  };
+
   const handleCheckoutSubmit = async () => {
     if (paymentMethod === 'Tunai' && (!amountReceived || parseFloat(amountReceived) < cartTotal)) {
       toast.warning('Uang Kurang', 'Uang yang diterima kurang dari total belanja.');
@@ -306,6 +339,9 @@ export default function CashierPage() {
         // Clear inputs
         setAmountReceived('');
         setSelectedCustomer('');
+        setShowAddCustomerInline(false);
+        setNewCustName('');
+        setNewCustPhone('');
       } else {
         toast.error('Transaksi Gagal', res.error || 'Gagal memproses transaksi.');
       }
@@ -607,7 +643,12 @@ export default function CashierPage() {
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-xl">Pilih Pembayaran</h3>
               <button 
-                onClick={() => setShowCheckoutModal(false)}
+                onClick={() => {
+                  setShowCheckoutModal(false);
+                  setShowAddCustomerInline(false);
+                  setNewCustName('');
+                  setNewCustPhone('');
+                }}
                 className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400"
               >
                 ✕
@@ -749,24 +790,80 @@ export default function CashierPage() {
 
             {paymentMethod === 'Kredit' && (
               <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                    Pilih Pelanggan Tetap
-                  </label>
-                  <select
-                    required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-emerald-500"
-                    value={selectedCustomer}
-                    onChange={(e) => setSelectedCustomer(e.target.value)}
-                  >
-                    <option value="">-- Pilih Pelanggan --</option>
-                    {customers.map((cust) => (
-                      <option key={cust.id} value={cust.id}>
-                        {cust.name} (Hutang: Rp {cust.total_debt.toLocaleString('id-ID')})
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[10px] text-slate-500 mt-1">Hutang baru sebesar Rp {cartTotal.toLocaleString('id-ID')} akan dicatat ke saldo hutang pelanggan.</p>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      Pilih Pelanggan Tetap
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAddCustomerInline(!showAddCustomerInline);
+                        setNewCustName('');
+                        setNewCustPhone('');
+                      }}
+                      className="text-xs text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition-colors"
+                    >
+                      {showAddCustomerInline ? '✕ Batal' : '+ Pelanggan Baru'}
+                    </button>
+                  </div>
+
+                  {showAddCustomerInline ? (
+                    <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4 space-y-3 animate-zoom-in">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tambah Pelanggan Baru</span>
+                      </div>
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          required
+                          placeholder="Nama Lengkap Pelanggan"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                          value={newCustName}
+                          onChange={(e) => setNewCustName(e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          placeholder="No. WhatsApp (cth: 081234567)"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                          value={newCustPhone}
+                          onChange={(e) => setNewCustPhone(e.target.value)}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddCustomerSubmit}
+                        disabled={addCustLoading || !newCustName.trim()}
+                        className="w-full py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 text-xs font-bold rounded-xl shadow-lg transition-colors flex justify-center items-center gap-1.5"
+                      >
+                        {addCustLoading ? (
+                          <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                            <span>Simpan & Pilih Pelanggan</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <select
+                        required
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-emerald-500"
+                        value={selectedCustomer}
+                        onChange={(e) => setSelectedCustomer(e.target.value)}
+                      >
+                        <option value="">-- Pilih Pelanggan --</option>
+                        {customers.map((cust) => (
+                          <option key={cust.id} value={cust.id}>
+                            {cust.name} (Hutang: Rp {cust.total_debt.toLocaleString('id-ID')})
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] text-slate-500 mt-1">Hutang baru sebesar Rp {cartTotal.toLocaleString('id-ID')} akan dicatat ke saldo hutang pelanggan.</p>
+                    </>
+                  )}
                 </div>
               </div>
             )}

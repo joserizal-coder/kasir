@@ -607,6 +607,83 @@ export function AppProvider({ children }) {
 
   const updateStoreSettings = (newSettings) => updateStore({ settings: newSettings });
 
+  // Customers CRUD & Debt Operations
+  const saveCustomer = async (customerData) => {
+    if (!store?.id) return { success: false, error: 'No active store' };
+
+    try {
+      const isCurrentlyOnline = checkOnline();
+      const customer = {
+        id: customerData.id || crypto.randomUUID(),
+        store_id: store.id,
+        name: customerData.name,
+        phone: customerData.phone || '',
+        total_debt: parseFloat(customerData.total_debt) || 0,
+        created_at: customerData.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        synced: isCurrentlyOnline
+      };
+
+      // 1. Simpan ke Dexie lokal
+      await db.customers.put(customer);
+
+      // 2. Upload ke Supabase jika online
+      if (isCurrentlyOnline) {
+        const uploadCustomer = { ...customer };
+        delete uploadCustomer.synced;
+        await supabase.from('customers').upsert(uploadCustomer);
+        await db.customers.update(customer.id, { synced: true });
+      }
+
+      await loadDexieCache(store.id);
+      triggerSync();
+      return { success: true, customer };
+    } catch (err) {
+      console.error('Error saving customer:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const payCustomerDebt = async (customerId, paymentAmount) => {
+    if (!store?.id) return { success: false, error: 'No active store' };
+
+    try {
+      const cust = await db.customers.get(customerId);
+      if (!cust) return { success: false, error: 'Pelanggan tidak ditemukan' };
+
+      const amount = parseFloat(paymentAmount) || 0;
+      if (amount <= 0) return { success: false, error: 'Nominal pembayaran tidak valid' };
+
+      const newDebt = Math.max(0, (parseFloat(cust.total_debt) || 0) - amount);
+      const isCurrentlyOnline = checkOnline();
+
+      const updatedCustomer = {
+        ...cust,
+        total_debt: newDebt,
+        updated_at: new Date().toISOString(),
+        synced: isCurrentlyOnline
+      };
+
+      // 1. Update Dexie lokal
+      await db.customers.put(updatedCustomer);
+
+      // 2. Upload ke Supabase jika online
+      if (isCurrentlyOnline) {
+        const uploadCustomer = { ...updatedCustomer };
+        delete uploadCustomer.synced;
+        await supabase.from('customers').upsert(uploadCustomer);
+        await db.customers.update(customerId, { synced: true });
+      }
+
+      await loadDexieCache(store.id);
+      triggerSync();
+      return { success: true, newDebt };
+    } catch (err) {
+      console.error('Error paying customer debt:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       user,
@@ -631,12 +708,15 @@ export function AppProvider({ children }) {
       addExpense,
       triggerSync,
       updateStoreSettings,
-      updateStore
+      updateStore,
+      saveCustomer,
+      payCustomerDebt
     }}>
       {children}
     </AppContext.Provider>
   );
 }
+
 
 export function useApp() {
   const context = useContext(AppContext);

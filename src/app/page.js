@@ -759,7 +759,7 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <div className="bg-slate-950/20 border border-dashed border-slate-800 p-6 rounded-2xl text-center space-y-2">
+        <div className="bg-slate-950/20 border border-dashed border-slate-800 p-6 rounded-2xl text-center space-y-2">
               <p className="text-sm text-slate-400">Belum ada QRIS kustom yang diunggah.</p>
               <p className="text-xs text-slate-500">Saat transaksi QRIS, sistem kasir akan menampilkan QRIS simulasi default.</p>
             </div>
@@ -767,7 +767,7 @@ export default function Home() {
         </div>
 
         {/* Shortcut Menus */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Link
             href="/app/cashier"
             className="group bg-slate-900 hover:bg-emerald-500/5 hover:border-emerald-500/40 border border-slate-800/80 p-8 rounded-3xl transition-all flex flex-col space-y-4 hover-scale"
@@ -804,6 +804,19 @@ export default function Home() {
             <div className="space-y-1">
               <h3 className="font-bold text-lg">Laporan Toko</h3>
               <p className="text-slate-400 text-sm leading-relaxed">Analisis untung-rugi bersih, HPP produk, rekap pajak UMKM, dan grafik penjualan harian.</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/app/customers"
+            className="group bg-slate-900 hover:bg-rose-500/5 hover:border-rose-500/40 border border-slate-800/80 p-8 rounded-3xl transition-all flex flex-col space-y-4 hover-scale"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center group-hover:bg-rose-500 group-hover:text-slate-950 transition-all shadow-md">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-bold text-lg">Kelola Pelanggan</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">Tambah pelanggan tetap, lacak saldo hutang kredit, dan catat pelunasan piutang toko.</p>
             </div>
           </Link>
         </div>
