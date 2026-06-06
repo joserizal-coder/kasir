@@ -273,8 +273,8 @@ export default function Home() {
         {/* Header */}
         <header className="max-w-6xl w-full mx-auto px-6 py-6 flex items-center justify-between border-b border-slate-900/80 z-10">
           <div className="flex items-center gap-2">
-            <div className="bg-emerald-500 text-slate-950 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl shadow-lg shadow-emerald-500/20">
-              K
+            <div className="relative w-10 h-10 overflow-hidden rounded-xl shadow-lg shadow-emerald-500/10 shrink-0">
+              <img src="/logo.png" alt="Kasir Kita Logo" className="w-full h-full object-cover" />
             </div>
             <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
               Kasir<span className="text-emerald-400">Kita</span>
@@ -546,8 +546,8 @@ export default function Home() {
       {/* Top Header */}
       <header className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between z-10">
         <div className="flex items-center gap-2">
-          <div className="bg-emerald-500 text-slate-950 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-lg">
-            K
+          <div className="relative w-9 h-9 overflow-hidden rounded-lg shrink-0">
+            <img src="/logo.png" alt="Kasir Kita Logo" className="w-full h-full object-cover" />
           </div>
           <div>
             <h1 className="font-extrabold text-md tracking-tight leading-tight">

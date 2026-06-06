@@ -83,8 +83,8 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md bg-slate-900/60 border border-slate-800/80 p-8 rounded-3xl shadow-2xl relative z-10 backdrop-blur-md">
         {/* Title Logo */}
         <div className="flex flex-col items-center text-center space-y-3 mb-8">
-          <div className="w-14 h-14 bg-gradient-to-tr from-violet-600 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/20 text-white font-extrabold text-2xl tracking-tighter">
-            K
+          <div className="relative w-14 h-14 overflow-hidden rounded-2xl shadow-lg shadow-violet-500/10 shrink-0">
+            <img src="/logo.png" alt="Kasir Kita Logo" className="w-full h-full object-cover" />
           </div>
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight">Kasir<span className="text-violet-400">Kita</span> Admin</h1>

@@ -2,42 +2,70 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #faf9f9;
+  --foreground: #1e1918;
   
-  --primary: 171 100% 35%; /* Jade/Teal: #00b489 */
-  --primary-light: 171 100% 95%;
-  --primary-hover: 171 100% 28%;
+  --primary: 30 88% 52%; /* Brand Orange logo: #F08519 */
+  --primary-light: 30 88% 95%;
+  --primary-hover: 30 88% 44%;
   
-  --secondary: 258 90% 66%; /* Violet: #8b5cf6 */
-  --secondary-light: 258 90% 97%;
+  --secondary: 8 8% 18%; /* Brand Espresso monogram: #332C2B */
+  --secondary-light: 8 8% 95%;
   
-  --accent: 38 92% 50%; /* Amber: #f59e0b */
+  --accent: 30 88% 52%; /* Keep consistent with primary */
   --danger: 350 89% 60%; /* Rose: #f43f5e */
   
   --card: #ffffff;
-  --card-border: #e2e8f0;
+  --card-border: #f0ebea;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0b0f19; /* Sleek Dark Slate Blue */
-    --foreground: #f1f5f9;
+    --background: #110e0e; /* Sleek Dark Espresso */
+    --foreground: #f6f3f3;
     
-    --primary: 171 100% 40%;
-    --primary-light: 171 30% 12%;
-    --primary-hover: 171 100% 45%;
+    --primary: 30 88% 52%;
+    --primary-light: 30 30% 12%;
+    --primary-hover: 30 88% 58%;
     
-    --secondary: 258 90% 70%;
-    --secondary-light: 258 30% 12%;
+    --secondary: 8 8% 70%;
+    --secondary-light: 8 30% 12%;
     
-    --card: #151f32;
-    --card-border: #1e293b;
+    --card: #1c1716; /* Dark Espresso card background */
+    --card-border: #2c2524;
   }
 }
 
 @theme {
   --font-sans: 'Outfit', sans-serif;
+  
+  /* Override emerald shades to logo orange shades */
+  --color-emerald-50: hsl(30 88% 97%);
+  --color-emerald-100: hsl(30 88% 92%);
+  --color-emerald-200: hsl(30 88% 82%);
+  --color-emerald-300: hsl(30 88% 72%);
+  --color-emerald-400: hsl(30 88% 62%);
+  --color-emerald-500: hsl(30 88% 52%); /* Brand Orange logo */
+  --color-emerald-600: hsl(30 88% 44%);
+  --color-emerald-700: hsl(30 88% 36%);
+  --color-emerald-800: hsl(30 88% 28%);
+  --color-emerald-900: hsl(30 88% 20%);
+  --color-emerald-950: hsl(30 88% 12%);
+
+  /* Override violet shades to logo monogram espresso shades */
+  --color-violet-50: hsl(8 12% 97%);
+  --color-violet-100: hsl(8 12% 92%);
+  --color-violet-200: hsl(8 10% 82%);
+  --color-violet-300: hsl(8 10% 70%);
+  --color-violet-400: hsl(8 8% 55%);
+  --color-violet-500: hsl(8 8% 42%);
+  --color-violet-600: hsl(8 8% 30%); /* Espresso button/secondary action */
+  --color-violet-700: hsl(8 8% 22%);
+  --color-violet-800: hsl(8 8% 18%); /* Brand Espresso monogram */
+  --color-violet-900: hsl(8 8% 14%);
+  --color-violet-950: hsl(8 8% 10%);
+
+  /* Base theme mappings */
   --color-primary: hsl(var(--primary));
   --color-primary-light: hsl(var(--primary-light));
   --color-primary-hover: hsl(var(--primary-hover));
@@ -66,14 +94,14 @@ body {
 }
 
 .dark .glass-panel {
-  background: rgba(21, 31, 50, 0.7);
+  background: rgba(28, 23, 22, 0.7);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Dynamic Gradients */
 .bg-gradient-brand {
-  background: linear-gradient(135deg, hsl(171, 100%, 35%) 0%, hsl(258, 90%, 60%) 100%);
+  background: linear-gradient(135deg, hsl(30, 88%, 52%) 0%, hsl(8, 8%, 30%) 100%);
 }
 
 .bg-gradient-dark {

@@ -216,6 +216,9 @@ export default function AdminPage() {
           <Link href="/" className="p-2 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           </Link>
+          <div className="relative w-8 h-8 overflow-hidden rounded-lg shrink-0">
+            <img src="/logo.png" alt="Kasir Kita Logo" className="w-full h-full object-cover" />
+          </div>
           <div>
             <h1 className="font-extrabold text-lg flex items-center gap-2">
               Kasir Kita<span className="text-violet-400">Console</span>
