@@ -5,6 +5,7 @@ import { useApp } from '../../../context/AppContext';
 import { db } from '../../../lib/db';
 import Link from 'next/link';
 import InvoiceModal from '../../../components/InvoiceModal';
+import { useToast } from '../../../components/Toast';
 
 // Format tanggal lokal ke format YYYY-MM-DD (untuk nilai input[type=date])
 function toInputDate(date) {
@@ -12,6 +13,7 @@ function toInputDate(date) {
 }
 
 export default function ReportsPage() {
+  const toast = useToast();
   const { store, expenses, addExpense, online, triggerSync } = useApp();
 
   // ── Rentang Tanggal ────────────────────────────────────────────────────────
@@ -145,8 +147,9 @@ export default function ReportsPage() {
       setShowExpenseModal(false);
       setExpenseAmount('');
       setExpenseDesc('');
+      toast.success('Pengeluaran Dicatat', 'Pengeluaran baru berhasil disimpan ke laporan.');
     } else {
-      alert(res.error || 'Gagal menyimpan pengeluaran');
+      toast.error('Gagal Menyimpan', res.error || 'Gagal menyimpan pengeluaran.');
     }
   };
 

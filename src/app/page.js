@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { supabase } from '../lib/supabase';
 import Link from 'next/link';
+import { useToast } from '../components/Toast';
 
 export default function Home() {
+  const toast = useToast();
   const {
     user,
     loading,
@@ -52,7 +54,7 @@ export default function Home() {
   const handleUpdateStore = async (e) => {
     e.preventDefault();
     if (!editName.trim()) {
-      alert('Nama toko tidak boleh kosong.');
+      toast.warning('Nama toko tidak boleh kosong.');
       return;
     }
     setSavingStore(true);
@@ -65,12 +67,12 @@ export default function Home() {
         }
       });
       if (res.success) {
-        alert('Profil Toko berhasil diperbarui!');
+        toast.success('Profil Toko Diperbarui', 'Perubahan informasi toko berhasil disimpan.');
       } else {
-        alert(res.error || 'Gagal memperbarui profil toko.');
+        toast.error('Gagal Memperbarui', res.error || 'Gagal memperbarui profil toko.');
       }
     } catch (err) {
-      alert(err.message || 'Terjadi kesalahan.');
+      toast.error('Terjadi Kesalahan', err.message);
     } finally {
       setSavingStore(false);
     }
@@ -132,7 +134,7 @@ export default function Home() {
 
     // Cek format file gambar
     if (!file.type.startsWith('image/')) {
-      alert('File harus berupa gambar (PNG, JPG, dll).');
+      toast.warning('Format Tidak Valid', 'File harus berupa gambar (PNG, JPG, dll).');
       return;
     }
 
@@ -178,29 +180,35 @@ export default function Home() {
 
       const res = await updateStoreSettings({ qris_code: dataUrl });
       if (res.success) {
-        alert('QRIS Toko berhasil diperbarui!');
+        toast.success('QRIS Berhasil Diunggah', 'QRIS toko kini aktif dan siap digunakan di layar kasir.');
       } else {
-        alert(res.error || 'Gagal memperbarui QRIS.');
+        toast.error('Gagal Mengunggah QRIS', res.error || 'Gagal memperbarui QRIS.');
       }
     } catch (err) {
-      alert(err.message || 'Terjadi kesalahan saat memproses gambar.');
+      toast.error('Terjadi Kesalahan', err.message || 'Terjadi kesalahan saat memproses gambar.');
     } finally {
       setUploadingQris(false);
     }
   };
 
   const handleQrisDelete = async () => {
-    if (!confirm('Apakah Anda yakin ingin menghapus QRIS Toko?')) return;
+    const ok = await toast.confirm({
+      title: 'Hapus QRIS Toko?',
+      message: 'QRIS yang terpasang akan dihapus. Layar kasir akan kembali menampilkan QRIS simulasi.',
+      confirmLabel: 'Ya, Hapus',
+      cancelLabel: 'Batal',
+    });
+    if (!ok) return;
     setUploadingQris(true);
     try {
       const res = await updateStoreSettings({ qris_code: null });
       if (res.success) {
-        alert('QRIS Toko berhasil dihapus.');
+        toast.success('QRIS Dihapus', 'QRIS kustom toko telah berhasil dihapus.');
       } else {
-        alert(res.error || 'Gagal menghapus QRIS.');
+        toast.error('Gagal Menghapus', res.error || 'Gagal menghapus QRIS.');
       }
     } catch (err) {
-      alert(err.message || 'Terjadi kesalahan saat menghapus QRIS.');
+      toast.error('Terjadi Kesalahan', err.message || 'Terjadi kesalahan saat menghapus QRIS.');
     } finally {
       setUploadingQris(false);
     }
@@ -219,7 +227,7 @@ export default function Home() {
           password,
         });
         if (error) throw error;
-        alert('Pendaftaran berhasil! Silakan cek email Anda untuk konfirmasi, atau langsung coba masuk jika email konfirmasi dilewati.');
+        toast.success('Pendaftaran Berhasil!', 'Silakan cek email Anda untuk konfirmasi akun.');
         setIsRegister(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -246,7 +254,7 @@ export default function Home() {
     if (res.success) {
       setOnboardingStep(2); // Proceed to starter products added step
     } else {
-      alert(res.error || 'Gagal membuat toko');
+      toast.error('Gagal Membuat Toko', res.error || 'Terjadi kesalahan saat membuat toko.');
     }
   };
 

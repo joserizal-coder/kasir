@@ -3,8 +3,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../../../context/AppContext';
 import Link from 'next/link';
+import { useToast } from '../../../components/Toast';
 
 export default function ProductsPage() {
+  const toast = useToast();
   const {
     store,
     products,
@@ -80,7 +82,7 @@ export default function ProductsPage() {
       if (res.success) {
         setShowProductModal(false);
       } else {
-        alert(res.error || 'Gagal menyimpan produk');
+        toast.error('Gagal Menyimpan', res.error || 'Gagal menyimpan produk.');
       }
     } catch (err) {
       console.error(err);

@@ -5,10 +5,12 @@ import { useApp } from '../../context/AppContext';
 import { supabase } from '../../lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useToast } from '../../components/Toast';
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
 export default function AdminPage() {
+  const toast = useToast();
   const { user, loading: authLoading } = useApp();
   const router = useRouter();
   
@@ -98,16 +100,16 @@ export default function AdminPage() {
 
       const data = await res.json();
       if (data.success) {
-        alert('Tindakan langganan berhasil disimpan!');
+        toast.success('Berhasil Disimpan', 'Tindakan billing berhasil diterapkan ke toko.');
         setNotes('');
         setSelectedStore(null);
         await fetchAdminData();
       } else {
-        alert(data.error || 'Terjadi kesalahan');
+        toast.error('Terjadi Kesalahan', data.error || 'Terjadi kesalahan.');
       }
     } catch (err) {
       console.error(err);
-      alert('Gagal memproses tindakan admin');
+      toast.error('Gagal Memproses', 'Gagal memproses tindakan admin.');
     } finally {
       setSubmitLoading(false);
     }

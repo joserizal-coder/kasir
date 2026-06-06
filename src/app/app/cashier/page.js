@@ -5,8 +5,10 @@ import { useApp } from '../../../context/AppContext';
 import { db } from '../../../lib/db';
 import Link from 'next/link';
 import InvoiceModal from '../../../components/InvoiceModal';
+import { useToast } from '../../../components/Toast';
 
 export default function CashierPage() {
+  const toast = useToast();
   const {
     store,
     cashier,
@@ -62,7 +64,7 @@ export default function CashierPage() {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('File harus berupa gambar (PNG, JPG, dll).');
+      toast.warning('Format Tidak Valid', 'File harus berupa gambar (PNG, JPG, dll).');
       return;
     }
 
@@ -108,29 +110,34 @@ export default function CashierPage() {
 
       const res = await updateStoreSettings({ qris_code: dataUrl });
       if (res.success) {
-        alert('QRIS Toko berhasil diperbarui!');
+        toast.success('QRIS Berhasil Diunggah', 'QRIS toko kini aktif di layar kasir.');
       } else {
-        alert(res.error || 'Gagal memperbarui QRIS.');
+        toast.error('Gagal Mengunggah QRIS', res.error || 'Gagal memperbarui QRIS.');
       }
     } catch (err) {
-      alert(err.message || 'Terjadi kesalahan saat memproses gambar.');
+      toast.error('Terjadi Kesalahan', err.message || 'Terjadi kesalahan saat memproses gambar.');
     } finally {
       setUploadingQris(false);
     }
   };
 
   const handleQrisDelete = async () => {
-    if (!confirm('Apakah Anda yakin ingin menghapus QRIS Toko?')) return;
+    const ok = await toast.confirm({
+      title: 'Hapus QRIS Toko?',
+      message: 'QRIS yang terpasang akan dihapus. Layar kasir kembali ke QRIS simulasi.',
+      confirmLabel: 'Ya, Hapus',
+    });
+    if (!ok) return;
     setUploadingQris(true);
     try {
       const res = await updateStoreSettings({ qris_code: null });
       if (res.success) {
-        alert('QRIS Toko berhasil dihapus.');
+        toast.success('QRIS Dihapus', 'QRIS kustom toko telah berhasil dihapus.');
       } else {
-        alert(res.error || 'Gagal menghapus QRIS.');
+        toast.error('Gagal Menghapus', res.error || 'Gagal menghapus QRIS.');
       }
     } catch (err) {
-      alert(err.message || 'Terjadi kesalahan saat menghapus QRIS.');
+      toast.error('Terjadi Kesalahan', err.message || 'Terjadi kesalahan saat menghapus QRIS.');
     } finally {
       setUploadingQris(false);
     }
@@ -270,11 +277,11 @@ export default function CashierPage() {
 
   const handleCheckoutSubmit = async () => {
     if (paymentMethod === 'Tunai' && (!amountReceived || parseFloat(amountReceived) < cartTotal)) {
-      alert('Uang yang diterima kurang dari total belanja.');
+      toast.warning('Uang Kurang', 'Uang yang diterima kurang dari total belanja.');
       return;
     }
     if (paymentMethod === 'Kredit' && !selectedCustomer) {
-      alert('Pilih pelanggan tetap untuk pembayaran kredit/hutang.');
+      toast.warning('Pilih Pelanggan', 'Pilih pelanggan tetap untuk pembayaran kredit/hutang.');
       return;
     }
 
@@ -300,7 +307,7 @@ export default function CashierPage() {
         setAmountReceived('');
         setSelectedCustomer('');
       } else {
-        alert(res.error || 'Gagal memproses transaksi');
+        toast.error('Transaksi Gagal', res.error || 'Gagal memproses transaksi.');
       }
     } catch (err) {
       console.error(err);
